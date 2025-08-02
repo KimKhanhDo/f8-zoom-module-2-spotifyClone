@@ -620,7 +620,8 @@
     height: 6px;
 }
 
-.progress-bar:hover .progress-fill {
+.progress-bar:hover .progress-fill,
+.volume-container:hover .volume-fill {
     background: var(--accent-hover);
 }
 
@@ -652,7 +653,8 @@
 }
 
 .progress-bar:hover .progress-handle,
-.volume-bar:hover .volume-handle {
+.volume-bar:hover .volume-handle,
+.volume-container:hover .volume-handle {
     opacity: 1;
 }
 

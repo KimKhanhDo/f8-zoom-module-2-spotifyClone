@@ -33,7 +33,9 @@
             href="css/responsive.css"
         />
     </head>
+
     <body>
+        <!-- Main App -->
         <div class="app-container">
             <!-- Left Sidebar -->
             <aside class="sidebar">
@@ -134,6 +136,7 @@
 
             <!-- Main Content -->
             <main class="main-content">
+                <!-- Main-header -->
                 <header class="main-header">
                     <div class="search-container">
                         <div class="search-box">
@@ -298,7 +301,7 @@
                             <h2 class="section-heading">Popular artists</h2>
                         </div>
                         <div class="artists-grid">
-                            <div class="artist-card">
+                            <!-- <div class="artist-card">
                                 <div class="artist-card-cover">
                                     <img
                                         src="placeholder.svg?height=160&width=160"
@@ -382,13 +385,16 @@
                                     <h3 class="artist-card-name">Trúc Nhân</h3>
                                     <p class="artist-card-type">Artist</p>
                                 </div>
-                            </div>
+                            </div> -->
                         </div>
                     </section>
 
                     <!-- Artist Hero Section -->
-                    <section class="artist-hero">
-                        <div class="hero-background">
+                    <section
+                        class="artist-hero"
+                        id="artist-hero"
+                    >
+                        <!-- <div class="hero-background">
                             <img
                                 src="placeholder.svg"
                                 alt="Đen artist background"
@@ -405,51 +411,41 @@
                             <p class="monthly-listeners">
                                 1,021,833 monthly listeners
                             </p>
-                        </div>
+                        </div> -->
                     </section>
 
                     <!-- Artist Controls -->
-                    <section class="artist-controls">
+                    <section
+                        class="artist-controls"
+                        id="artist-controls"
+                    >
                         <button class="play-btn-large toggle-play-btn">
                             <i class="play-icon fas fa-play"></i>
                         </button>
                     </section>
 
                     <!-- Popular Tracks -->
-                    <section class="popular-section">
+                    <section
+                        class="popular-section"
+                        id="popular-section"
+                    >
                         <h2 class="section-title">Popular</h2>
                         <div class="track-list">
-                            <!-- <div class="track-item playing">
-                                <div class="track-number">
-                                    <i
-                                        class="fas fa-volume-up playing-icon"
-                                    ></i>
-                                </div>
-                                <div class="track-image">
-                                    <img
-                                        src="placeholder.svg?height=40&width=40"
-                                        alt="Lối Nhỏ"
-                                    />
-                                </div>
-                                <div class="track-info">
-                                    <div class="track-name playing-text">
-                                        Lối Nhỏ
-                                    </div>
-                                </div>
-                                <div class="track-plays">45,686,866</div>
-                                <div class="track-duration">4:12</div>
-                                <button class="track-menu-btn">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </div> -->
+                            <!-- Render all tracks here -->
                         </div>
                     </section>
                 </div>
             </main>
 
             <!-- Bottom Player -->
-            <footer class="player">
-                <div class="player-left">
+            <footer
+                class="player"
+                id="player"
+            >
+                <div
+                    class="player-left"
+                    id="player-left"
+                >
                     <img
                         src="placeholder.svg?height=56&width=56"
                         alt="Current track"
@@ -502,15 +498,18 @@
                         <i class="fas fa-microphone"></i>
                     </button>
                     <div class="volume-container">
-                        <button class="control-btn">
+                        <button class="control-btn volume-icon">
                             <i class="fas fa-volume-down"></i>
                         </button>
                         <div class="volume-bar">
                             <div
                                 class="volume-fill"
-                                style="width: 70%"
+                                style="width: 51.6129%"
                             ></div>
-                            <div class="volume-handle"></div>
+                            <div
+                                class="volume-handle"
+                                style="left: 42px"
+                            ></div>
                         </div>
                     </div>
                     <button class="control-btn">

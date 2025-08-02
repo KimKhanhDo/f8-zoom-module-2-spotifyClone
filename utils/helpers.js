@@ -20,3 +20,8 @@ export function formatTime(seconds) {
 
     return `${hrsFormat}${minsFormat}:${secsFormat}`;
 }
+
+// Định dạng số theo quy tắc của khu vực
+export function formatCount(count) {
+    return count.toLocaleString('en-US');
+}

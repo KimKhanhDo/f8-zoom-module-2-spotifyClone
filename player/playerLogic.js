@@ -7,8 +7,15 @@ setupAudio, togglePlay, loadCurrentTrack, startPlayer, update UI, play/pause nh�
 - Không tự thay đổi state của tracks, chỉ gọi qua playerData để lấy dữ liệu hoặc cập nhật dữ liệu.
  */
 
-import * as playerData from './playerData.js';
+import * as playerData from '../data/playerData.js';
 import * as playerUI from './playerUI.js';
+import * as playerNavigationUI from './playerNavigationUI.js';
+import * as trackListEvent from '../events/trackListEvent.js';
+import {
+    renderArtistHeroSection,
+    renderMiniPlayerSection,
+    renderPopularTracksSection,
+} from '../ui/sectionRenderers.js';
 
 let audio = null;
 let isLoop = false;
@@ -17,10 +24,20 @@ const PREV_RESTART_THRESHOLD = 2; // Nếu bấm "Previous" khi bài hát đã p
 
 export function startPlayer() {
     const tracks = playerData.getAllTracks();
-    playerUI.renderTrackList(tracks);
-    playerUI.updateProgressUI(null);
+    renderPopularTracksSection(tracks, (trackIndex) => {
+        // Render playlist và gắn callback khi chọn bài
+        playerData.setCurrentIndex(trackIndex); // Cập nhật currentIndex trong data
+        startPlayer(); // Gọi lại startPlayer để load lại UI & play track mới
+    });
+    // renderAndSetupPlaylist(tracks);
+    playerNavigationUI.updateProgressUI(null);
     loadCurrentTrack();
 }
+
+// function renderAndSetupPlaylist(tracks) {
+//     playerUI.renderPopularTracks(tracks);
+//     trackListEvent.setupTrackListEvent();
+// }
 
 function loadCurrentTrack() {
     const currentTrack = playerData.getCurrentTrack();
@@ -30,24 +47,26 @@ function loadCurrentTrack() {
         return;
     }
 
-    playerUI.renderHeroSection(currentTrack);
-    playerUI.renderMiniPlayer(currentTrack);
+    // playerUI.renderMiniPlayerInfo(currentTrack);
+
+    renderArtistHeroSection(currentTrack);
+    renderMiniPlayerSection(currentTrack);
     setupAudio(currentTrack.audio_url);
 }
 
 function bindAudioEvents(audio) {
     // Gắn event xử lý icon play/pause
     audio.onplay = () => {
-        playerUI.updatePlayPauseIcon(true);
+        playerNavigationUI.updatePlayPauseIcon(true);
     };
 
     audio.onpause = () => {
-        playerUI.updatePlayPauseIcon(false);
+        playerNavigationUI.updatePlayPauseIcon(false);
     };
 
     // Cập nhật progress mỗi khi currentTime thay đổi
     audio.ontimeupdate = () => {
-        playerUI.updateProgressUI(audio);
+        playerNavigationUI.updateProgressUI(audio);
     };
 
     audio.onended = () => {
@@ -64,10 +83,14 @@ function setupAudio(url) {
 
     // LUÔN auto play khi next/prev hoặc load bài mới
     audio.oncanplay = () => {
-        audio.play();
+        // audio.play();
     };
 
     bindAudioEvents(audio);
+}
+
+export function getAudio() {
+    return audio;
 }
 
 export function togglePlay() {
@@ -107,7 +130,7 @@ function navigateTrack(action) {
     }
 
     loadCurrentTrack();
-    playerUI.renderTrackList(playerData.getAllTracks());
+    renderAndSetupPlaylist(playerData.getAllTracks());
 }
 
 export function handleNextTrack() {
@@ -121,13 +144,13 @@ export function handlePreviousTrack() {
 export function handleLoopState() {
     isLoop = !isLoop;
     audio.loop = isLoop;
-    playerUI.toggleLoopState(isLoop);
+    playerNavigationUI.toggleLoopState(isLoop);
     console.log(isLoop);
 }
 
 export function handleRandomState() {
     isRandom = !isRandom;
-    playerUI.toggleRandomState(isRandom);
+    playerNavigationUI.toggleRandomState(isRandom);
 }
 
 // Need to check again
@@ -139,5 +162,12 @@ export function handleSeekTrack(e, progressBar) {
     percent = Math.max(0, Math.min(1, percent));
 
     audio.currentTime = percent * audio.duration;
-    playerUI.updateProgressUI(audio);
+    playerNavigationUI.updateProgressUI(audio);
+}
+
+export function setVolume(percent) {
+    // Thuộc tính audio.volume chỉ nhận giá trị từ 0 đến 1
+    if (audio) {
+        audio.volume = Math.max(0, Math.min(percent / 100, 1));
+    }
 }

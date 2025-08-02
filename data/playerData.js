@@ -10,8 +10,6 @@
 - Các module khác chỉ cần “xin” dữ liệu state thông qua các hàm getter/setter.
  */
 
-import { httpRequest } from '../utils/index.js';
-
 let tracks = [];
 let currentIndex = 0;
 
@@ -32,9 +30,9 @@ export function getCurrentTrack() {
     return tracks[currentIndex] || null;
 }
 
-// export function setCurrentIndex(index) {
-//     currentIndex = index;
-// }
+export function setCurrentIndex(index) {
+    currentIndex = index;
+}
 
 function navigationTrack(mode = 'next') {
     if (tracks.length === 0) return;
@@ -82,9 +80,4 @@ export function getPrevTrack() {
 // Lấy bài random
 export function getRandomTrack() {
     return navigationTrack('random');
-}
-
-export async function getArtistById(id) {
-    const res = await httpRequest.get(`artists/${id}`);
-    return res;
 }

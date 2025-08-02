@@ -1,6 +1,10 @@
-import { mockTracks } from './mockTracks.js';
-import httpRequest from './utils/httpRequest.js';
-import { playerData, playerEvents, playerLogic } from './player/index.js';
+import { httpRequest } from './utils/index.js';
+import { playerData } from './data/index.js';
+import {
+    getPlayerControllerInstance,
+    renderPopularArtistsSection,
+    renderPopularTracksSection,
+} from './ui/sectionRenderers.js';
 
 // Auth Modal Functionality
 document.addEventListener('DOMContentLoaded', function () {
@@ -118,12 +122,52 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // Other functionality
+// document.addEventListener('DOMContentLoaded', async () => {
+//     // TODO: Implement other functionality here
+//     // Load dữ liệu chính
+//     const { tracks } = await httpRequest.get('tracks');
+//     playerData.setTracks(tracks);
+//     // playerData.setTracks(mockTracks);
+
+//     renderPopularArtistsSection();
+
+//     // Khởi động player
+//     playerLogic.startPlayer();
+
+//     // Setup event cho các phần control
+//     playerEvents.setupPlayerControls();
+// });
+
 document.addEventListener('DOMContentLoaded', async () => {
-    // TODO: Implement other functionality here
+    // 1. Load dữ liệu chính
+    // 2. Render các section ngoài player
+    // 3. Lấy instance PlayerController
+
     const { tracks } = await httpRequest.get('tracks');
     playerData.setTracks(tracks);
-
     // playerData.setTracks(mockTracks);
-    playerLogic.startPlayer();
-    playerEvents.setupPlayerControls();
+
+    renderPopularArtistsSection();
+    const playerController = getPlayerControllerInstance();
+    startPlayer();
+
+    function handleTrackSelect(trackIndex) {
+        // 1. Đánh dấu lại index của bài hát được chọn (update state).
+        // 2. Load & play bài hát mới, cập nhật UI player (hero/mini player).
+        // 3. Render lại playlist để highlight đúng bài đang phát.
+        playerData.setCurrentIndex(trackIndex);
+        playerController.loadCurrentTrack();
+        renderPopularTracksSection(
+            playerData.getAllTracks(),
+            handleTrackSelect
+        );
+    }
+
+    // Hàm startPlayer (khởi tạo playlist, setup các callback UI)
+    function startPlayer() {
+        const tracks = playerData.getAllTracks();
+        renderPopularTracksSection(tracks, handleTrackSelect);
+        playerController.updateProgressUI();
+        playerController.loadCurrentTrack();
+    }
 });
