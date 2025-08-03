@@ -1,5 +1,5 @@
-import { artistData } from '../../data/index.js';
-import { helpers } from '../../utils/index.js';
+import { artistsData } from '../../../data/index.js';
+import { helpers } from '../../../utils/index.js';
 
 export class ArtistHeroComponent {
     constructor(container) {
@@ -8,7 +8,7 @@ export class ArtistHeroComponent {
 
     async render(track) {
         // Fetch artist info (chỉ để lấy is_verified)
-        const artistInfo = await artistData.getArtistById(track.artist_id);
+        const artistInfo = await artistsData.getArtistById(track.artist_id);
 
         // Tạo HTML string (template)
         this.container.innerHTML = `

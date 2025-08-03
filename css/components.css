@@ -156,12 +156,13 @@
 
 /* Tabs */
 .nav-tab {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-md);
-    background-color: transparent;
+    padding: 8.2px 12px;
+    border-radius: var(--radius-xl);
+    /* background-color: transparent; */
+    background-color: var(--bg-active);
     color: var(--text-secondary);
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     transition: all var(--transition-fast);
 }
 
@@ -170,8 +171,17 @@
 }
 
 .nav-tab.active {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
+    background-color: var(--text-primary);
+    color: var(--bg-primary);
+}
+
+.close-filter-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-active);
+    color: #fff;
+    font-size: 1rem;
 }
 
 /* Search library */
@@ -195,7 +205,7 @@
 }
 
 .search-library-btn:hover {
-    background-color: var(--bg-tertiary);
+    background-color: var(--bg-active);
     color: var(--text-primary);
     transform: scale(1.04);
 }

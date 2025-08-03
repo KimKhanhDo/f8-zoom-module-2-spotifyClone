@@ -2,8 +2,10 @@ import { httpRequest } from './utils/index.js';
 import { playerData } from './data/index.js';
 import {
     getPlayerControllerInstance,
+    renderBiggestHitsSection,
     renderPopularArtistsSection,
     renderPopularTracksSection,
+    renderSidebarLeftSection,
 } from './ui/sectionRenderers.js';
 
 // Auth Modal Functionality
@@ -147,7 +149,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     playerData.setTracks(tracks);
     // playerData.setTracks(mockTracks);
 
+    renderSidebarLeftSection();
+    // renderSearchLibrarySection();
+    renderBiggestHitsSection();
     renderPopularArtistsSection();
+
     const playerController = getPlayerControllerInstance();
     startPlayer();
 

@@ -1,4 +1,4 @@
-import { helpers } from '../../utils/index.js';
+import { helpers } from '../../../utils/index.js';
 
 export class MiniPlayerInfoComponent {
     constructor(container) {

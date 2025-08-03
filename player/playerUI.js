@@ -1,5 +1,5 @@
 import * as playerData from '../data/playerData.js';
-import * as artistData from '../data/artistData.js';
+import * as artistData from '../data/artistsData.js';
 import { helpers } from '../utils/index.js';
 
 // export function renderPopularTracks(tracks) {

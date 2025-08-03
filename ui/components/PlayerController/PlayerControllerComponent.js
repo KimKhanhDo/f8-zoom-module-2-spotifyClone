@@ -1,10 +1,10 @@
 // PlayerControllerComponent.js
-import { playerData } from '../../data/index.js';
-import { helpers } from '../../utils/index.js';
+import { playerData } from '../../../data/index.js';
+import { helpers } from '../../../utils/index.js';
 import {
     renderArtistHeroSection,
     renderMiniPlayerSection,
-} from '../sectionRenderers.js';
+} from '../../sectionRenderers.js';
 
 export class PlayerControllerComponent {
     constructor({ container, onTrackChange }) {
@@ -74,7 +74,7 @@ export class PlayerControllerComponent {
 
         // LUÔN auto play khi next/prev hoặc load bài mới
         this.audio.oncanplay = () => {
-            this.audio.play();
+            // this.audio.play();
         };
 
         this.audio.onplay = () => this._updatePlayPauseIcon(true);

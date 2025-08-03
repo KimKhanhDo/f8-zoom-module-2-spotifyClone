@@ -1,6 +1,5 @@
-import { playerData } from '../../data/index.js';
-import { getAudio } from '../../player/playerLogic.js';
-import { helpers } from '../../utils/index.js';
+import { playerData } from '../../../data/index.js';
+import { helpers } from '../../../utils/index.js';
 
 export class PopularTracksComponent {
     constructor({ tracks = [], container, playerController, onTrackSelect }) {

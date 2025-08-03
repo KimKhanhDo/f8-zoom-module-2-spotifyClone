@@ -1,4 +1,5 @@
 import * as playerData from './playerData.js';
-import * as artistData from './artistData.js';
+import * as artistsData from './artistsData.js';
+import * as tracksData from './tracksData.js';
 
-export { playerData, artistData };
+export { playerData, artistsData, tracksData };

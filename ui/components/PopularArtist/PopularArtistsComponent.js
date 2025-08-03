@@ -4,8 +4,8 @@ export class PopularArtistsComponent {
         this.onArtistClick = onArtistClick; // callback khi click vào 1 artist
     }
 
+    // Tạo HTML string cho tất cả artist
     render(container) {
-        // Tạo HTML string cho tất cả artist
         const html = this.artists
             .map(
                 (artist) => `

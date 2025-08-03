@@ -1,10 +1,13 @@
-import { artistData, playerData } from '../data/index.js';
+import { artistsData, tracksData } from '../data/index.js';
 import {
-    PlayerControllerComponent,
-    ArtistHeroComponent,
-    MiniPlayerInfoComponent,
     PopularArtistsComponent,
+    ArtistHeroComponent,
     PopularTracksComponent,
+    BiggestHitsComponent,
+    PlayerControllerComponent,
+    MiniPlayerInfoComponent,
+    SidebarComponent,
+    SearchLibraryComponent,
 } from './components/index.js';
 
 // Biến lưu instance từng component
@@ -12,6 +15,8 @@ let playerController = null;
 let artistHeroComponent = null;
 let miniPlayerComponent = null;
 let popularTracksComponent = null;
+let sidebarComponent = null;
+let searchLibraryComponent = null;
 
 export function getPlayerControllerInstance() {
     if (!playerController) {
@@ -82,6 +87,19 @@ export function renderPopularTracksSection(tracks, onTrackSelect) {
     popularTracksComponent.render(tracks);
 }
 
+export async function renderBiggestHitsSection() {
+    const { tracks } = await tracksData.getTrendingTracks();
+
+    const hitsContainer = document.querySelector('.hits-grid');
+
+    const biggestHitsComponent = new BiggestHitsComponent({
+        container: hitsContainer,
+        hitTracks: tracks,
+    });
+
+    biggestHitsComponent.render();
+}
+
 export async function renderArtistHeroSection(track) {
     const heroSection = document.getElementById('artist-hero');
 
@@ -103,7 +121,7 @@ export function renderMiniPlayerSection(track) {
 }
 
 export async function renderPopularArtistsSection() {
-    const { artists } = await artistData.getAllArtist();
+    const { artists } = await artistsData.getAllArtist();
     const artistsContainer = document.querySelector('.artists-grid');
 
     // Tạo instance component và truyền callback
@@ -119,3 +137,21 @@ export async function renderPopularArtistsSection() {
     // 4. Render vào UI
     popularArtistsComponent.render(artistsContainer);
 }
+
+export function renderSidebarLeftSection() {
+    const sidebarContainer = document.querySelector('.sidebar');
+
+    if (!sidebarComponent) {
+        sidebarComponent = new SidebarComponent(sidebarContainer);
+    }
+
+    sidebarComponent.render();
+}
+
+// export function renderSearchLibrarySection() {
+//     const searchContainer = document.querySelector('.search-library');
+
+//     if (!searchLibraryComponent) {
+//         searchLibraryComponent = new SearchLibraryComponent(searchContainer);
+//     }
+// }
