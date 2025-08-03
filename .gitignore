@@ -1,4 +1,5 @@
-music/
 mockTracks.js
+mockSidebarData.js
+music/
 player/
 events/
