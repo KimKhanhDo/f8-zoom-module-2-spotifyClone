@@ -83,7 +83,7 @@ export class SearchLibraryComponent {
 
     // Xử lý khi bấm nút search
     _handleSearchBtnClick(e) {
-        e.stopPropagation(); // Chặn nổi bọt, tránh auto đóng luôn
+        e.stopPropagation(); // Chặn nổi bọt, tránh auto đóng
 
         // Chỉ mở ô search nếu hiện tại đang đóng
         if (!this.isSearchOpen) {
@@ -105,7 +105,12 @@ export class SearchLibraryComponent {
             this.searchBtn.classList.remove('hide');
             this.sortBtn.classList.remove('hide');
             this.searchWrapper.classList.remove('expanded');
+
             this.isSearchOpen = false; // Đánh dấu lại trạng thái đã đóng
+            this.searchInput.value = '';
+
+            //* Gọi lại logic filter để trả về kết quả full -> Giao diện hiển thị lại như lúc đầu
+            this._handleSearchInput();
         }
     }
 }

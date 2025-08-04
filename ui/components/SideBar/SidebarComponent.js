@@ -7,10 +7,10 @@ const TAB_ARTISTS = 'artists';
 
 export class SidebarComponent {
     constructor(container) {
-        this.container = container; // DOM element cha -> .sidebar
+        this.container = container; // DOM element cha -> '.sidebar'
         this.currentTab = TAB_ALL;
 
-        // Kết quả hiện tại sau search (mặc định là data gốc)
+        // Khởi tạo state: danh sách kết quả hiện tại (mặc định là toàn bộ)
         this.playlistResults = playlists;
         this.artistResults = artists;
         this.searchQuery = '';
@@ -21,51 +21,53 @@ export class SidebarComponent {
             this.updateResults.bind(this)
         );
 
-        this.render();
+        // Luôn render lần đầu toàn bộ giao diện sidebar
+        this.renderSidebar();
     }
 
     // Callback được SearchLibraryComponent gọi khi có kết quả tìm kiếm mới
-    updateResults(playlistResults, artistResults, searchQuery) {
-        this.playlistResults = playlistResults;
-        this.artistResults = artistResults;
+    updateResults(filteredPlaylists, filteredArtists, searchQuery) {
+        this.playlistResults = filteredPlaylists;
+        this.artistResults = filteredArtists;
         this.searchQuery = searchQuery;
-        this.render();
+        this.renderSidebar();
     }
 
-    render() {
+    renderSidebar() {
         let contentHtml = '';
 
         // Xác định dữ liệu thực tế sẽ render ra UI (có thể là tất cả hoặc đã được lọc)
-        const displayedPlaylists = Array.isArray(this.playlistResults)
-            ? this.playlistResults
-            : playlists;
+        const displayedPlaylists = this.playlistResults;
+        const displayedArtists = this.artistResults;
+        const isSearching = !!this.searchQuery;
 
-        const displayedArtists = Array.isArray(this.artistResults)
-            ? this.artistResults
-            : artists;
-
-        // Nếu đang search và không có kết quả nào (bất kể tab nào), hiển thị thông báo
+        // Kiểm tra: nếu đang search mà không tìm thấy kết quả nào
+        // User đã nhập search & ko tìm được playlist hoặc artist nào
         const nothingFound =
             this.searchQuery &&
             displayedPlaylists.length === 0 &&
             displayedArtists.length === 0;
 
         if (nothingFound) {
-            // Thông báo không tìm thấy kết quả, nhưng vẫn render đủ tab
+            // Thông báo không tìm thấy kết quả
             contentHtml = this._renderNoResults();
         } else {
-            // Render theo tab đang chọn (logic cũ vẫn giữ nguyên)
+            // Nếu có kết quả, render list theo tab (ALL, PLAYLISTS, ARTISTS)
             contentHtml = this._renderLibraryItems(
                 displayedPlaylists,
                 displayedArtists
             );
         }
 
-        // Cập nhật nội dung UI
+        // Cập nhật nội dung vào DOM
         this.container.querySelector('.library-content').innerHTML =
             contentHtml;
+
         this.container.querySelector('.nav-tabs').innerHTML = this._renderTabs(
-            this.currentTab
+            this.currentTab,
+            displayedPlaylists,
+            displayedArtists,
+            isSearching
         );
 
         // Gán lại event cho tab & nút đóng filter
@@ -89,12 +91,14 @@ export class SidebarComponent {
     _renderLibraryItems(displayedPlaylists, displayedArtists) {
         let items = '';
 
+        // Nếu tab hiện tại là ALL hoặc PLAYLISTS thì render danh sách playlist
         if (this.currentTab === TAB_ALL || this.currentTab === TAB_PLAYLISTS) {
             items += displayedPlaylists
                 .map((item) => this._renderPlaylistItem(item))
                 .join('');
         }
 
+        // Nếu tab hiện tại là ALL hoặc ARTISTS thì render danh sách artist
         if (this.currentTab === TAB_ALL || this.currentTab === TAB_ARTISTS) {
             items += displayedArtists
                 .map((item) => this._renderArtistItem(item))
@@ -152,28 +156,62 @@ export class SidebarComponent {
     `;
     }
 
-    // Render tabs theo currentTab
-    _renderTabs(currentTab) {
-        if (currentTab === TAB_ALL) {
-            // Hiện cả hai tab, không có nút close
+    _renderTabs(currentTab, displayedPlaylists, displayedArtists, isSearching) {
+        // Đặt các biến trạng thái rõ ràng, ngắn gọn
+        const noResult =
+            isSearching &&
+            displayedPlaylists.length === 0 &&
+            displayedArtists.length === 0;
+
+        const onlyArtist =
+            isSearching &&
+            displayedPlaylists.length === 0 &&
+            displayedArtists.length > 0;
+
+        const onlyPlaylist =
+            isSearching &&
+            displayedArtists.length === 0 &&
+            displayedPlaylists.length > 0;
+
+        const isFilterTab = !isSearching && currentTab !== TAB_ALL;
+
+        // 1. Nếu đang search và không có kết quả → ẩn tabs
+        if (noResult) {
+            return '';
+        }
+
+        // 2. Nếu chỉ có artist
+        if (onlyArtist) {
             return `
-            <button class="nav-tab " data-tab="${TAB_PLAYLISTS}">Playlists</button>
-            <button class="nav-tab " data-tab="${TAB_ARTISTS}">Artists</button>
+            <button class="nav-tab active" data-tab="artists">Artists</button>
         `;
         }
 
-        // Nếu đang chọn playlist hoặc artist → chỉ hiện tab active + nút close
-        const isPlaylist = currentTab === TAB_PLAYLISTS;
-        return `
-          <button class="close-filter-btn">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
+        // 3. Nếu chỉ có playlist
+        if (onlyPlaylist) {
+            return `
+            <button class="nav-tab active" data-tab="playlists">Playlists</button>
+        `;
+        }
 
-        <button class="nav-tab active" data-tab="${currentTab}">
-            ${isPlaylist ? 'Playlists' : 'Artists'}
-        </button>
-       
-    `;
+        // 4. Nếu đang chọn playlist hoặc artist → chỉ hiện tab active + nút close
+        if (isFilterTab) {
+            const isPlaylist = currentTab === TAB_PLAYLISTS;
+            return `
+            <button class="close-filter-btn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <button class="nav-tab active" data-tab="${currentTab}">
+                ${isPlaylist ? 'Playlists' : 'Artists'}
+            </button>
+        `;
+        }
+
+        // 5. Trường hợp mặc định TAB_ALL hoặc có cả 2 loại kết quả (both)
+        return `
+            <button class="nav-tab" data-tab="${TAB_PLAYLISTS}">Playlists</button>
+            <button class="nav-tab" data-tab="${TAB_ARTISTS}">Artists</button>
+        `;
     }
 
     // Gán lại event cho các tab và nút close filter
@@ -187,7 +225,7 @@ export class SidebarComponent {
 
             tab.onclick = () => {
                 this.currentTab = tabValue;
-                this.render();
+                this.renderSidebar();
             };
         });
 
@@ -195,7 +233,7 @@ export class SidebarComponent {
         if (closeFilterBtn) {
             closeFilterBtn.onclick = () => {
                 this.currentTab = TAB_ALL;
-                this.render();
+                this.renderSidebar();
             };
         }
     }

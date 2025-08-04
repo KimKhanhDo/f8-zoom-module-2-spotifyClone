@@ -145,7 +145,7 @@ export function renderSidebarLeftSection() {
         sidebarComponent = new SidebarComponent(sidebarContainer);
     }
 
-    sidebarComponent.render();
+    sidebarComponent.renderSidebar();
 }
 
 // export function renderSearchLibrarySection() {
