@@ -40,7 +40,6 @@ export class SearchLibraryComponent {
     // Xử lý nhập input: lọc data và gọi callback
     _handleSearchInput() {
         const searchText = this.searchInput.value.trim().toLowerCase();
-        console.log(searchText);
 
         // Destructuring nhận về 2 arrays trong object trả về, gán thẳng vào hai biến cùng tên
         const { filteredPlaylists, filteredArtists } =

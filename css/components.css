@@ -154,6 +154,24 @@
     font-size: 16px;
 }
 
+/* Following btn */
+.follow-btn {
+    padding: 8.5px 20px;
+    border: 1px solid var(--text-muted);
+    border-radius: 999px;
+    background-color: transparent;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.follow-btn:hover {
+    border-color: var(--text-primary);
+    transform: scale(1.03);
+}
+
 /* Tabs */
 .nav-tab {
     padding: 8.2px 12px;
@@ -225,6 +243,103 @@
 
 .sort-btn:hover {
     color: var(--text-primary);
+}
+
+/* Search wrapper + search input */
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+
+    transition: box-shadow 0.2s;
+    box-shadow: none;
+    background: var(--bg-active);
+    color: var(--text-secondary);
+
+    display: none;
+    opacity: 0;
+    width: 0;
+    transition: width 0.3s, opacity 0.25s;
+}
+
+/* Show when expanded */
+.search-wrapper.expanded {
+    display: flex;
+    opacity: 1;
+    width: 100%;
+}
+
+/* Hide the main search button when expanded */
+.search-library-btn.hide {
+    display: none;
+}
+
+.sort-btn.hide {
+    display: none;
+}
+
+.search-btn-icon {
+    display: flex;
+    align-items: center;
+    margin-left: 4px;
+
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.search-library-input {
+    border: none;
+    outline: none;
+
+    width: 160px;
+    min-width: 0;
+    padding-left: 4px;
+
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 15px;
+
+    transition: width 0.25s, opacity 0.25s;
+    opacity: 0.88;
+}
+
+.search-library-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+    font-size: 15px;
+}
+
+.no-results-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 250px;
+    width: 100%;
+
+    text-align: center;
+    color: #b3b3b3;
+    font-family: inherit;
+}
+
+.no-results-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: #fff;
+    margin-bottom: 16px;
+}
+
+.no-results-desc {
+    font-size: 1rem;
+    letter-spacing: 0.2px;
+    line-height: 1.4;
+    color: #b3b3b3;
 }
 
 /* Search box */
@@ -996,6 +1111,35 @@
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
+}
+
+/* CSS WHEN TOGGLE UI BETWEEN HOME & DETAIL PANEL */
+.content-bottom {
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.content-bottom.active {
+    max-height: 999px;
+    opacity: 1;
+    visibility: visible;
+    overflow: visible;
+}
+
+.hits-section,
+.artists-section {
+    display: block;
+    transition: opacity 0.3s;
+}
+
+.hits-section.hidden,
+.artists-section.hidden {
+    display: none;
 }
 
 /* Grid Layouts */

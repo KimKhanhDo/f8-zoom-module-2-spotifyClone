@@ -1,27 +1,27 @@
 import { helpers } from '../../../utils/index.js';
 
 export class BiggestHitsComponent {
-    constructor({ container, hitTracks = [], onTrackClick }) {
+    constructor({ container, biggestHits = [], onTrackClick }) {
         this.container = container;
-        this.hitTracks = hitTracks;
-        this.onTrackClick = onTrackClick; // callback khi click vào 1 hit
+        this.biggestHits = biggestHits;
+        this.onTrackClick = onTrackClick; /// callback nhận playlistId
     }
 
     render() {
-        const hitCards = this.hitTracks
-            .map((track) => {
+        const hitCards = this.biggestHits
+            .map((item) => {
                 return `
-            <div class="hit-card" data-id=${helpers.escapeHTML(track.id)}>
+            <div class="hit-card" data-id=${helpers.escapeHTML(item.id)}>
                             <div class="hit-card-cover">
                                 <img
                                     src=${
-                                        track.album_cover_image_url
+                                        item.cover_image_url
                                             ? helpers.escapeHTML(
-                                                  track.album_cover_image_url
+                                                  item.cover_image_url
                                               )
                                             : 'placeholder.svg?height=160&width=160'
                                     }
-                                    alt=${helpers.escapeHTML(track.title)}
+                                    alt=${helpers.escapeHTML(item.title)}
                                 />
                                 <button class="hit-play-btn">
                                     <i class="fas fa-play"></i>
@@ -29,10 +29,10 @@ export class BiggestHitsComponent {
                             </div>
                             <div class="hit-card-info">
                                 <h3 class="hit-card-title">${helpers.escapeHTML(
-                                    track.title
+                                    item.title
                                 )}</h3>
                                 <p class="hit-card-artist">${helpers.escapeHTML(
-                                    track.artist_name
+                                    item.artist_name
                                 )}</p>
                             </div>
                         </div>
@@ -41,15 +41,33 @@ export class BiggestHitsComponent {
             .join('');
 
         this.container.innerHTML = hitCards;
+
+        this._bindBiggestHitsEvent();
     }
 
-    bindBiggestHitsEvent() {
-        this.container.addEventListener('click', (e) => {
+    // _bindBiggestHitsEvent() {
+    //     this.container.addEventListener('click', async (e) => {
+    //         const hitCard = e.target.closest('.hit-card');
+    //         if (!hitCard) return;
+
+    //         const cardID = hitCard.dataset.id;
+    //         console.log(cardID);
+
+    //         const data = await albumsData.getAlbumById(cardID);
+    //         console.log(data);
+    //     });
+    // }
+
+    _bindBiggestHitsEvent() {
+        this.container.onclick = (e) => {
             const hitCard = e.target.closest('.hit-card');
             if (!hitCard) return;
+            const playlistId = hitCard.dataset.id;
 
-            const cardID = hitCard.dataset.id();
-            console.log(cardID);
-        });
+            // Gọi callback khi có
+            if (typeof this.onTrackClick === 'function') {
+                this.onTrackClick(playlistId);
+            }
+        };
     }
 }

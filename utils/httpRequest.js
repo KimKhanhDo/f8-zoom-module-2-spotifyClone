@@ -42,7 +42,7 @@ class HttpRequest {
         return await this._send(path, 'PUT', payload, options);
     }
 
-    async put(path, payload, options) {
+    async patch(path, payload, options) {
         return await this._send(path, 'PATCH', payload, options);
     }
 

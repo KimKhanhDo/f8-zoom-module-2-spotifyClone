@@ -1,11 +1,12 @@
-import { httpRequest } from './utils/index.js';
 import { playerData } from './data/index.js';
+
 import {
     getPlayerControllerInstance,
     renderBiggestHitsSection,
     renderPopularArtistsSection,
     renderPopularTracksSection,
     renderSidebarLeftSection,
+    toggleDetailPanel,
 } from './ui/sectionRenderers.js';
 
 // Auth Modal Functionality
@@ -125,55 +126,157 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Other functionality
 // document.addEventListener('DOMContentLoaded', async () => {
-//     // TODO: Implement other functionality here
-//     // Load dữ liệu chính
+//     // 1. Load dữ liệu chính
+//     // 2. Render các section ngoài player
+//     // 3. Lấy instance PlayerController
+
 //     const { tracks } = await httpRequest.get('tracks');
 //     playerData.setTracks(tracks);
 //     // playerData.setTracks(mockTracks);
 
+//     renderSidebarLeftSection();
+//     renderBiggestHitsSection();
 //     renderPopularArtistsSection();
 
-//     // Khởi động player
-//     playerLogic.startPlayer();
+//     const playerController = getPlayerControllerInstance();
+//     startPlayer();
 
-//     // Setup event cho các phần control
-//     playerEvents.setupPlayerControls();
+//     function handleTrackSelect(trackIndex) {
+//         // 1. Đánh dấu lại index của bài hát được chọn (update state).
+//         // 2. Load & play bài hát mới, cập nhật UI player (hero/mini player).
+//         // 3. Render lại playlist để highlight đúng bài đang phát.
+//         playerData.setCurrentIndex(trackIndex);
+//         playerController.loadCurrentTrack();
+//         renderPopularTracksSection(
+//             playerData.getAllTracks(),
+//             handleTrackSelect
+//         );
+//     }
+
+//     // Hàm startPlayer (khởi tạo playlist, setup các callback UI)
+//     function startPlayer() {
+//         const tracks = playerData.getAllTracks();
+//         renderPopularTracksSection(tracks, handleTrackSelect);
+//         playerController.updateProgressUI();
+//         playerController.loadCurrentTrack();
+//     }
 // });
 
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Load dữ liệu chính
-    // 2. Render các section ngoài player
-    // 3. Lấy instance PlayerController
+// document.addEventListener('DOMContentLoaded', async () => {
+//     renderSidebarLeftSection();
+//     renderBiggestHitsSection();
+//     renderPopularArtistsSection();
 
-    const { tracks } = await httpRequest.get('tracks');
-    playerData.setTracks(tracks);
-    // playerData.setTracks(mockTracks);
+//     const playerController = getPlayerControllerInstance(onPlayerTrackChange);
 
+//     startPlayer();
+
+//     // Không cần fetch/setTracks ở đây nữa, mọi data sẽ động khi user click. Nếu chưa có data thì sẽ không render gì
+//     function startPlayer() {
+//         const tracks = playerData.getAllTracks();
+//         renderPopularTracksSection(tracks, handleTrackSelect);
+//         playerController.updateProgressUI();
+//         playerController.loadCurrentTrack();
+//     }
+
+//     // Callback này được truyền vào PlayerControllerComponent khi tạo instance.
+//     // Bất cứ khi nào player đổi bài, hàm này sẽ update lại UI track list -> highlight đúng bài đang phát
+//     function onPlayerTrackChange() {
+//         renderPopularTracksSection(
+//             playerData.getAllTracks(),
+//             handleTrackSelect
+//         );
+//     }
+// });
+
+let playerController = null;
+document.addEventListener('DOMContentLoaded', () => {
+    // Get DOM elements
+    const homeBtn = document.querySelector('.home-btn');
+    const logo = document.querySelector('.logo');
+    const recentMenu = document.querySelector('.recent-context-menu');
+    const sortBtn = document.querySelector('.sort-btn');
+
+    // Render sidebar và các section phụ
     renderSidebarLeftSection();
-    // renderSearchLibrarySection();
     renderBiggestHitsSection();
     renderPopularArtistsSection();
 
-    const playerController = getPlayerControllerInstance();
+    // Assign event cho icon Home & Spotify
+    homeBtn.onclick = () => toggleDetailPanel(false);
+    logo.onclick = () => toggleDetailPanel(false);
+
+    // Test cho nút sort
+    sortBtn.onclick = () => {
+        recentMenu.classList.toggle('show');
+    };
+
+    setupAutoCloseContextMenu('.recent-context-menu', '.sort-btn');
+
+    // Tạo player controller & truyền callback khi đổi bài
+    playerController = getPlayerControllerInstance(onPlayerTrackChange);
+
     startPlayer();
-
-    function handleTrackSelect(trackIndex) {
-        // 1. Đánh dấu lại index của bài hát được chọn (update state).
-        // 2. Load & play bài hát mới, cập nhật UI player (hero/mini player).
-        // 3. Render lại playlist để highlight đúng bài đang phát.
-        playerData.setCurrentIndex(trackIndex);
-        playerController.loadCurrentTrack();
-        renderPopularTracksSection(
-            playerData.getAllTracks(),
-            handleTrackSelect
-        );
-    }
-
-    // Hàm startPlayer (khởi tạo playlist, setup các callback UI)
-    function startPlayer() {
-        const tracks = playerData.getAllTracks();
-        renderPopularTracksSection(tracks, handleTrackSelect);
-        playerController.updateProgressUI();
-        playerController.loadCurrentTrack();
-    }
 });
+
+/**
+ * Khởi động player và playlist khi vừa load app
+ *
+ * Chức năng:
+ * 1. Lấy danh sách track hiện tại từ playerData (có thể là list mặc định hoặc do user chọn trước đó).
+ * 2. Render danh sách playlist vào giao diện chính (section track-list) và gắn callback xử lý khi user chọn bài mới.
+ * 3. Cập nhật lại giao diện progress bar player (thanh tiến trình) để đồng bộ với trạng thái nhạc hiện tại.
+ * 4. Phát bài hát đầu tiên trong danh sách (nếu có), đồng thời đồng bộ mini player và các section liên quan.
+ *
+ * Mục tiêu:
+ * - Đảm bảo khi user vừa mở app, toàn bộ giao diện player & playlist được hiển thị đúng trạng thái hiện tại,
+ *   sẵn sàng cho thao tác play/next/prev hoặc chọn bài mới.
+ */
+function startPlayer() {
+    const tracks = playerData.getAllTracks();
+    renderPopularTracksSection(tracks, handleTrackSelect);
+    playerController.updateProgressUI();
+    playerController.loadCurrentTrack();
+}
+
+/**
+ * Khi user chọn bài hát mới:
+ * 1. Đánh dấu lại index của bài hát được chọn (update state).
+ * 2. Load & play bài hát mới, cập nhật UI player (hero/mini player).
+ * 3. Render lại playlist để highlight đúng bài đang phát.
+ */
+export function handleTrackSelect(trackIndex) {
+    playerData.setCurrentIndex(trackIndex);
+    playerController.loadCurrentTrack();
+    renderPopularTracksSection(playerData.getAllTracks(), handleTrackSelect);
+}
+
+/**
+ * Khi player đổi bài (ví dụ next/prev hoặc hết bài):
+ * 1. Callback này được truyền vào PlayerControllerComponent khi tạo instance.
+ * 2. Bất cứ khi nào player đổi bài, hàm này sẽ update lại UI track list -> highlight đúng bài đang phát.
+ */
+export function onPlayerTrackChange() {
+    renderPopularTracksSection(playerData.getAllTracks(), handleTrackSelect);
+}
+
+function setupAutoCloseContextMenu(
+    menuSelector,
+    triggerSelector,
+    showClass = 'show'
+) {
+    document.addEventListener('click', function (e) {
+        const menu = document.querySelector(menuSelector);
+        const triggerBtn = document.querySelector(triggerSelector);
+
+        // Nếu menu đang mở và click không phải vào sort-btn hoặc bên trong menu thì ẩn menu
+        if (
+            menu &&
+            menu.classList.contains(showClass) &&
+            !menu.contains(e.target) &&
+            !triggerBtn.contains(e.target)
+        ) {
+            menu.classList.remove(showClass);
+        }
+    });
+}

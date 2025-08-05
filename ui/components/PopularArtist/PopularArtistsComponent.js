@@ -1,15 +1,17 @@
 export class PopularArtistsComponent {
-    constructor({ artists = [], onArtistClick }) {
+    constructor({ container, artists = [], onArtistClick }) {
+        this.container = container;
         this.artists = artists;
         this.onArtistClick = onArtistClick; // callback khi click vào 1 artist
     }
 
     // Tạo HTML string cho tất cả artist
-    render(container) {
+    render() {
         const html = this.artists
+
             .map(
                 (artist) => `
-            <div class="artist-card" data-id="${artist.artist_id}">
+            <div class="artist-card" data-id="${artist.id}">
                 <div class="artist-card-cover">
                     <img
                         src="${
@@ -31,18 +33,19 @@ export class PopularArtistsComponent {
             )
             .join('');
 
-        container.innerHTML = html;
+        this.container.innerHTML = html;
+        this._bindArtistCardEvent();
+    }
 
-        // Gắn event cho nút play từng artist
-        container.querySelectorAll('.artist-play-btn').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const artistCard = btn.closest('.artist-card');
-                const artistId = artistCard.dataset.id;
-                if (typeof this.onArtistPlay === 'function') {
-                    this.onArtistPlay(artistId);
-                }
-            });
-        });
+    _bindArtistCardEvent() {
+        this.container.onclick = (e) => {
+            const card = e.target.closest('.artist-card');
+            if (!card) return;
+            const artistId = card.dataset.id;
+
+            if (typeof this.onArtistClick === 'function') {
+                this.onArtistClick(artistId);
+            }
+        };
     }
 }

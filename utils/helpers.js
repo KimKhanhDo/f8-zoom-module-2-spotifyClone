@@ -23,5 +23,6 @@ export function formatTime(seconds) {
 
 // Định dạng số theo quy tắc của khu vực
 export function formatCount(count) {
+    if (typeof count !== 'number') return '0';
     return count.toLocaleString('en-US');
 }

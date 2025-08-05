@@ -6,13 +6,32 @@ export class MiniPlayerInfoComponent {
     }
 
     render(track) {
+        if (!track) {
+            // Track null/undefined => clear UI mini player (ẩn hoặc hiển thị placeholder)
+            this.container.innerHTML = `
+             <img
+                        src='https://placehold.co/40x40?text=No+Song'
+                        alt="No Song"
+                        class="player-image"
+                    />
+                    <div class="player-info">
+                        <div class="player-title">
+                          No Song
+                        </div>
+                        <div class="player-artist">No Artist</div>
+                    </div>
+                    <button class="add-btn">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+        `;
+            return;
+        }
+
         this.container.innerHTML = `
              <img
                         src=${
-                            track.album_cover_image_url
-                                ? helpers.escapeHTML(
-                                      track.album_cover_image_url
-                                  )
+                            track.cover_image_url
+                                ? helpers.escapeHTML(track.cover_image_url)
                                 : 'https://placehold.co/40x40?text=IMG'
                         }
                         alt="Current track"

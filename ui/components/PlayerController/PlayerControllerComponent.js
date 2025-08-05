@@ -12,8 +12,8 @@ export class PlayerControllerComponent {
         this.audio = null;
         this.isLoop = false;
         this.isRandom = false;
-        this.onTrackChange = onTrackChange; // Lưu callback
         this.PREV_RESTART_THRESHOLD = 2;
+        this.onTrackChange = onTrackChange; // Lưu callback
 
         this._dragHandler = this.handleVolumeAdjustment.bind(this);
         this._stopDragHandler = this._stopDrag.bind(this);
@@ -74,7 +74,7 @@ export class PlayerControllerComponent {
 
         // LUÔN auto play khi next/prev hoặc load bài mới
         this.audio.oncanplay = () => {
-            // this.audio.play();
+            this.audio.play();
         };
 
         this.audio.onplay = () => this._updatePlayPauseIcon(true);
@@ -136,7 +136,6 @@ export class PlayerControllerComponent {
             }
         }
         this.loadCurrentTrack();
-        // render popular playlist here
     }
 
     handleLoopState() {
@@ -159,12 +158,12 @@ export class PlayerControllerComponent {
         const currentTrack = playerData.getCurrentTrack();
 
         if (!currentTrack || !currentTrack.audio_url) {
+            renderMiniPlayerSection(null);
             console.error('File audio is not valid');
             return;
         }
 
         // Render các phần UI khác
-        renderArtistHeroSection(currentTrack);
         renderMiniPlayerSection(currentTrack);
 
         // Setup và play audio
@@ -173,6 +172,7 @@ export class PlayerControllerComponent {
         // Nếu click bài khác, gọi callback playerController xử lý logic update index, phát nhạc
         if (typeof this.onTrackChange === 'function') {
             this.onTrackChange(currentTrack);
+            // render popular playlist here tại callback
         }
     }
 

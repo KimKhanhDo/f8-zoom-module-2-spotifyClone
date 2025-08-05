@@ -1,4 +1,6 @@
-import { artistsData, tracksData } from '../data/index.js';
+import { artistsData, albumsData, playerData } from '../data/index.js';
+import { handleTrackSelect } from '../main.js';
+
 import {
     PopularArtistsComponent,
     ArtistHeroComponent,
@@ -7,7 +9,6 @@ import {
     PlayerControllerComponent,
     MiniPlayerInfoComponent,
     SidebarComponent,
-    SearchLibraryComponent,
 } from './components/index.js';
 
 // Biến lưu instance từng component
@@ -16,13 +17,13 @@ let artistHeroComponent = null;
 let miniPlayerComponent = null;
 let popularTracksComponent = null;
 let sidebarComponent = null;
-let searchLibraryComponent = null;
 
-export function getPlayerControllerInstance() {
+export function getPlayerControllerInstance(onTrackChange) {
     if (!playerController) {
         const playerContainer = document.getElementById('player');
         playerController = new PlayerControllerComponent({
             container: playerContainer,
+            onTrackChange,
         });
 
         // Gắn event delegation cho tất cả toggle-play-btn
@@ -31,40 +32,24 @@ export function getPlayerControllerInstance() {
                 playerController.togglePlay();
             }
         });
+    } else if (onTrackChange) {
+        // Nếu đã có controller, cập nhật lại callback
+        playerController.onTrackChange = onTrackChange;
     }
+
     return playerController;
 }
 
-// export function renderPopularTracksSection(tracks) {
-//     const trackListContainer = document.querySelector('.track-list');
-//     const playerController = getPlayerControllerInstance();
+// ========== RENDER OTHER SECTIONS ==========
+export function renderSidebarLeftSection() {
+    const sidebarContainer = document.querySelector('.sidebar');
 
-//     if (!popularTracksComponent) {
-//         popularTracksComponent = new PopularTracksComponent({
-//             tracks,
-//             container: trackListContainer,
-//             playerController,
-//             onTrackSelect: (trackIndex) => {
-//                 playerData.setCurrentIndex(trackIndex);
-//                 playerController.loadCurrentTrack();
+    if (!sidebarComponent) {
+        sidebarComponent = new SidebarComponent(sidebarContainer);
+    }
 
-//                 // Đổi bài hát, update UI playlist
-//                 popularTracksComponent.render(tracks);
-//             },
-//         });
-//     } else {
-//         // Update lại tracks & callback nếu cần
-//         popularTracksComponent.tracks = tracks;
-//         popularTracksComponent.onTrackSelect = (trackIndex) => {
-//             playerData.setCurrentIndex(trackIndex);
-//             playerController.loadCurrentTrack();
-//             popularTracksComponent.render(tracks);
-//         };
-//     }
-
-//     // Chỉ render lần đầu để hiển thị playlist, sau đó sẽ render lại mỗi khi đổi bài/callback trong onTrackSelect!
-//     popularTracksComponent.render(tracks);
-// }
+    sidebarComponent.renderSidebar();
+}
 
 export function renderPopularTracksSection(tracks, onTrackSelect) {
     const trackListContainer = document.querySelector('.track-list');
@@ -74,30 +59,14 @@ export function renderPopularTracksSection(tracks, onTrackSelect) {
         popularTracksComponent = new PopularTracksComponent({
             tracks: tracks,
             container: trackListContainer,
-            playerController: playerController,
-            onTrackSelect: onTrackSelect,
+            playerController,
+            onTrackSelect,
         });
-    } else {
-        // Update lại tracks & callback nếu cần
-        popularTracksComponent.tracks = tracks;
-        popularTracksComponent.onTrackSelect = onTrackSelect;
     }
-
-    // Chỉ render lần đầu để hiển thị playlist, sau đó sẽ render lại mỗi khi đổi bài/callback trong onTrackSelect!
+    // Update lại tracks & callback nếu cần
+    // render lần đầu để hiển thị playlist, sau đó sẽ render lại mỗi khi đổi bài/callback trong onTrackSelect!
+    Object.assign(popularTracksComponent, { tracks, onTrackSelect });
     popularTracksComponent.render(tracks);
-}
-
-export async function renderBiggestHitsSection() {
-    const { tracks } = await tracksData.getTrendingTracks();
-
-    const hitsContainer = document.querySelector('.hits-grid');
-
-    const biggestHitsComponent = new BiggestHitsComponent({
-        container: hitsContainer,
-        hitTracks: tracks,
-    });
-
-    biggestHitsComponent.render();
 }
 
 export async function renderArtistHeroSection(track) {
@@ -120,38 +89,104 @@ export function renderMiniPlayerSection(track) {
     miniPlayerComponent.render(track);
 }
 
+// ========== BIGGEST HITS & POPULAR ARTIST ==========
+
+function updateUIWithInfoAndTracks(info, tracks) {
+    if (!tracks || tracks.length === 0) {
+        // alert('Không có bài hát!');
+        playerData.setTracks([]);
+        renderArtistHeroSection(info);
+        renderPopularTracksSection([], handleTrackSelect);
+        renderMiniPlayerSection(null);
+        return;
+    }
+
+    playerData.setTracks(tracks);
+    playerData.setCurrentIndex(0);
+
+    renderArtistHeroSection(info);
+    renderPopularTracksSection(tracks, handleTrackSelect);
+
+    const playerController = getPlayerControllerInstance();
+    playerController.loadCurrentTrack();
+}
+
+export function toggleDetailPanel(forceShow = false) {
+    const detailPanel = document.querySelector('.content-bottom');
+    const hitsSection = document.querySelector('.hits-section');
+    const artistsSection = document.querySelector('.artists-section');
+
+    if (forceShow) {
+        detailPanel.classList.add('active');
+        hitsSection.classList.add('hidden');
+        artistsSection.classList.add('hidden');
+    } else {
+        detailPanel.classList.remove('active');
+        hitsSection.classList.remove('hidden');
+        artistsSection.classList.remove('hidden');
+    }
+}
+
+function getScrollbarWidth() {
+    // Tạo 1 div ẩn ra ngoài màn hình để đo scrollbar thật
+    const div = document.createElement('div');
+    div.style.visibility = 'hidden';
+    div.style.overflow = 'scroll';
+    div.style.position = 'absolute';
+    div.style.top = '-9999px';
+
+    document.body.appendChild(div);
+    // Hiệu giữa offsetWidth và clientWidth chính là chiều rộng scrollbar
+    const scrollbarWidth = div.offsetWidth - div.clientWidth;
+
+    document.body.removeChild(div);
+    return scrollbarWidth;
+}
+
+// callback truyền vào BiggestHitsComponent
+async function handleHitCardClick(albumId) {
+    if (!albumId || albumId === 'undefined') return;
+    const albumInfo = await albumsData.getAlbumById(albumId);
+    const { tracks } = await albumsData.getAlbumTracks(albumId);
+
+    toggleDetailPanel(true);
+    updateUIWithInfoAndTracks(albumInfo, tracks);
+}
+
+// callback truyền vào ArtistsComponent
+async function handleArtistCardClick(artistId) {
+    if (!artistId || artistId === 'undefined') return;
+    const artistInfo = await artistsData.getArtistById(artistId);
+    const { tracks } = await artistsData.getArtistTracks(artistId);
+
+    toggleDetailPanel(true);
+    updateUIWithInfoAndTracks(artistInfo, tracks);
+}
+
+export async function renderBiggestHitsSection() {
+    const { albums } = await albumsData.getAllAlbums();
+    const hitsContainer = document.querySelector('.hits-grid');
+
+    const biggestHitsComponent = new BiggestHitsComponent({
+        container: hitsContainer,
+        biggestHits: albums,
+        onTrackClick: handleHitCardClick,
+    });
+
+    biggestHitsComponent.render();
+}
+
 export async function renderPopularArtistsSection() {
     const { artists } = await artistsData.getAllArtist();
     const artistsContainer = document.querySelector('.artists-grid');
 
     // Tạo instance component và truyền callback
     const popularArtistsComponent = new PopularArtistsComponent({
-        artists,
-        onArtistPlay: (artistId) => {
-            // Đây là callback khi bấm nút play trên artist-card
-            alert('Clicked play for artist: ' + artistId);
-            // Bạn có thể redirect, show artist detail, hoặc fetch track v.v ở đây!
-        },
+        container: artistsContainer,
+        artists: artists,
+        onArtistClick: handleArtistCardClick,
     });
 
     // 4. Render vào UI
-    popularArtistsComponent.render(artistsContainer);
+    popularArtistsComponent.render();
 }
-
-export function renderSidebarLeftSection() {
-    const sidebarContainer = document.querySelector('.sidebar');
-
-    if (!sidebarComponent) {
-        sidebarComponent = new SidebarComponent(sidebarContainer);
-    }
-
-    sidebarComponent.renderSidebar();
-}
-
-// export function renderSearchLibrarySection() {
-//     const searchContainer = document.querySelector('.search-library');
-
-//     if (!searchLibraryComponent) {
-//         searchLibraryComponent = new SearchLibraryComponent(searchContainer);
-//     }
-// }

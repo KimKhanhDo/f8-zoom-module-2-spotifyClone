@@ -6,28 +6,47 @@ export class ArtistHeroComponent {
         this.container = container; // section .artist-hero
     }
 
-    async render(track) {
-        // Fetch artist info (chỉ để lấy is_verified)
-        const artistInfo = await artistsData.getArtistById(track.artist_id);
+    async render(data) {
+        // Set default nếu không có data
+        let artistId = '';
+        let artistName = 'Unknown Artist';
+        let coverImage = 'placeholder.svg';
+        let playCount = 0;
+        let isVerified = false;
+
+        // Nếu có data thì lấy field từ data
+        if (data) {
+            artistId = data.artist_id || data.id || '';
+
+            artistName = data.artist_name || data.name || 'Unknown Artist';
+
+            coverImage =
+                data.cover_image_url || data.image_url || 'placeholder.svg';
+
+            playCount = data.play_count || data.monthly_listeners || 0;
+
+            // Dùng is_verified trực tiếp nếu có, chỉ fetch nếu chưa có
+            // is_verified cần fetch cho case obj trả về là album detail
+            isVerified = data.is_verified;
+            if (typeof isVerified === 'undefined' && artistId) {
+                const artistInfo = await artistsData.getArtistById(artistId);
+                isVerified = artistInfo?.is_verified;
+            }
+        }
 
         // Tạo HTML string (template)
         this.container.innerHTML = `
             <div class="hero-background">
                 <img
-                    src="${
-                        helpers.escapeHTML(track.album_cover_image_url) ||
-                        'placeholder.svg'
-                    }"
-                    alt="${helpers.escapeHTML(
-                        track.artist_name
-                    )} artist background"
+                    src="${helpers.escapeHTML(coverImage)}"
+                    alt="${helpers.escapeHTML(artistName)} artist background"
                     class="hero-image"
                 />
                 <div class="hero-overlay"></div>
             </div>
             <div class="hero-content">
                 ${
-                    artistInfo?.is_verified
+                    isVerified
                         ? `
                 <div class="verified-badge">
                     <i class="fas fa-check-circle"></i>
@@ -36,11 +55,9 @@ export class ArtistHeroComponent {
                 `
                         : ''
                 }
-                <h1 class="artist-name">${helpers.escapeHTML(
-                    track.artist_name
-                )}</h1>
+                <h1 class="artist-name">${helpers.escapeHTML(artistName)}</h1>
                 <p class="monthly-listeners">
-                    ${helpers.formatCount(track.play_count)} monthly listeners
+                    ${helpers.formatCount(playCount)} monthly listeners
                 </p>
             </div>
         `;
