@@ -104,9 +104,31 @@
 }
 
 .auth-buttons {
-    display: flex;
+    /* display: flex; */
     align-items: center;
     gap: var(--spacing-md);
+
+    /* opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s; */
+    display: none;
+}
+
+.auth-buttons.show {
+    /* opacity: 1;
+    visibility: visible; */
+    display: flex;
+}
+
+.user-info {
+    /* display: flex; */
+    align-items: center;
+    gap: 8px;
+    display: none;
+}
+
+.user-info.show {
+    display: flex;
 }
 
 .content-wrapper {

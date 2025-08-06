@@ -18,15 +18,25 @@ class HttpRequest {
                 _config.body = JSON.stringify(payload);
             }
 
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken) {
+                _config.headers.Authorization = `Bearer ${accessToken}`;
+            }
+
             const response = await fetch(`${this.baseUrl}${path}`, _config);
-
-            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-
             const data = await response.json();
+
+            if (!response.ok) {
+                const error = new Error(`HTTP error: ${response.status}`);
+                error.response = data;
+                error.status = response.status;
+                throw error;
+            }
 
             return data;
         } catch (error) {
             console.log(error);
+            throw error;
         }
     }
 

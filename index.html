@@ -33,134 +33,7 @@
             href="css/responsive.css"
         />
 
-        <style>
-            .search-library {
-                position: relative;
-            }
-
-            .recent-context-menu {
-                display: none;
-                position: absolute;
-                top: 260px;
-                left: 27px;
-
-                min-width: 240px;
-                background: var(--bg-active, #282828);
-                border-radius: 8px;
-                padding: 4px;
-
-                list-style: none;
-                font-size: 15px;
-                z-index: 999;
-
-                margin: 0;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-            }
-
-            .recent-context-menu.show {
-                display: block;
-            }
-
-            .recent-context-menu .recent-menu-title {
-                padding: 12px;
-                font-weight: 700;
-                font-size: 14px;
-                color: #b3b3b3;
-                cursor: default;
-                background: transparent;
-                border: none;
-                letter-spacing: 0.01em;
-                pointer-events: none;
-            }
-
-            .recent-context-menu .recent-menu-item {
-                width: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 14px;
-                padding: 14px;
-                border-radius: 2px;
-                color: #fff;
-                font: inherit;
-                transition: background 0.16s, color 0.16s;
-                cursor: pointer;
-            }
-
-            .recent-context-menu .recent-menu-item:hover,
-            .recent-context-menu .recent-menu-item:focus {
-                background: #3e3e3e;
-                color: #fff;
-                outline: none;
-            }
-
-            .recent-context-menu .recent-menu-item.active,
-            .recent-context-menu .recent-menu-item.active:hover {
-                color: #1ed760;
-                font-weight: 500;
-                background: transparent;
-            }
-
-            .recent-context-menu .recent-menu-check {
-                color: #1ed760;
-                font-size: 16px;
-                margin-left: 8px;
-                opacity: 1;
-            }
-
-            .recent-context-menu
-                .recent-menu-item:not(.active)
-                .recent-menu-check {
-                opacity: 0;
-            }
-
-            .recent-context-menu .recent-divider {
-                height: 1px;
-                background: #393939;
-                margin: 3px 0;
-                border: none;
-                pointer-events: none;
-            }
-
-            /* ========== VIEW AS ========== */
-            .recent-context-menu .recent-view-as-row {
-                display: flex;
-                gap: 8px;
-                padding: 4px;
-                border-radius: 6px;
-                background: #1a1a1a;
-                justify-content: space-between;
-            }
-
-            .recent-context-menu .recent-view-btn {
-                width: 44px;
-                height: 34px;
-                background: transparent;
-                border: none;
-                color: #b3b3b3;
-                border-radius: 8px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 22px;
-                cursor: pointer;
-                transition: background 0.16s, color 0.14s;
-                margin: 0;
-            }
-
-            .recent-context-menu .recent-view-btn:hover,
-            .recent-context-menu .recent-view-btn:focus {
-                color: #fff;
-                outline: none;
-            }
-
-            .recent-context-menu .recent-view-btn.active {
-                background: #3e3e3e;
-                color: #fff;
-                font-weight: 700;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
-        </style>
+        <style></style>
     </head>
 
     <body>
@@ -263,7 +136,7 @@
 
                     <!-- Library Content -->
                     <div class="library-content">
-                        <!-- <div class="library-item active">
+                        <div class="library-item active">
                             <div class="item-icon liked-songs">
                                 <i class="fas fa-heart"></i>
                             </div>
@@ -322,7 +195,7 @@
                                 <div class="item-title">Thùy Chi</div>
                                 <div class="item-subtitle">Artist</div>
                             </div>
-                        </div> -->
+                        </div>
                     </div>
                 </nav>
             </aside>
@@ -351,16 +224,20 @@
                             <button class="auth-btn signup-btn">Sign up</button>
                             <button class="auth-btn login-btn">Log in</button>
                         </div>
+
                         <div class="user-menu">
-                            <button
-                                class="user-avatar"
-                                id="userAvatar"
-                            >
-                                <img
-                                    src="placeholder.svg?height=32&width=32"
-                                    alt="User Avatar"
-                                />
-                            </button>
+                            <div class="user-info">
+                                <button
+                                    class="user-avatar"
+                                    id="userAvatar"
+                                >
+                                    <span
+                                        id="user-name"
+                                        class="user-name"
+                                    ></span>
+                                </button>
+                            </div>
+
                             <div
                                 class="user-dropdown"
                                 id="userDropdown"
@@ -761,8 +638,12 @@
                             Sign up to start listening
                         </h1>
 
+                        <div class="auth-error">
+                            <span>BE error display here</span>
+                        </div>
+
                         <form class="auth-form-content">
-                            <div class="form-group invalid">
+                            <div class="form-group">
                                 <input
                                     type="email"
                                     placeholder="Email address"
@@ -779,24 +660,34 @@
                             </div>
 
                             <div class="form-group">
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    class="form-input"
-                                    id="signupPassword"
-                                />
+                                <div class="form-password">
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        class="form-input"
+                                        id="signupPassword"
+                                    />
+                                    <i
+                                        class="eye-icon fa-regular fa-eye-slash"
+                                        id="eye-icon"
+                                    ></i>
+                                </div>
                                 <div class="error-message">
                                     <i class="fas fa-info-circle"></i>
                                     <span
-                                        >Password must be at least 8
-                                        characters</span
-                                    >
+                                        ><span>
+                                            Password must be at least 6
+                                            characters, including uppercase,
+                                            lowercase letters, and a number.
+                                        </span>
+                                    </span>
                                 </div>
                             </div>
 
                             <button
                                 type="submit"
                                 class="auth-submit-btn"
+                                disabled
                             >
                                 Sign Up
                             </button>
@@ -872,6 +763,13 @@
                 </div>
             </div>
         </div>
+
+        <!-- Toast section -->
+
+        <div
+            id="toast-container"
+            class="toast-container"
+        ></div>
 
         <script
             src="main.js"
