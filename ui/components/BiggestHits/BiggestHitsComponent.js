@@ -15,13 +15,11 @@ export class BiggestHitsComponent {
                             <div class="hit-card-cover">
                                 <img
                                     src=${
-                                        item.cover_image_url
-                                            ? helpers.escapeHTML(
-                                                  item.cover_image_url
-                                              )
+                                        item.image_url
+                                            ? helpers.escapeHTML(item.image_url)
                                             : 'placeholder.svg?height=160&width=160'
                                     }
-                                    alt=${helpers.escapeHTML(item.title)}
+                                    alt=${helpers.escapeHTML(item.name)}
                                 />
                                 <button class="hit-play-btn">
                                     <i class="fas fa-play"></i>
@@ -29,10 +27,10 @@ export class BiggestHitsComponent {
                             </div>
                             <div class="hit-card-info">
                                 <h3 class="hit-card-title">${helpers.escapeHTML(
-                                    item.title
+                                    item.name
                                 )}</h3>
                                 <p class="hit-card-artist">${helpers.escapeHTML(
-                                    item.artist_name
+                                    item.user_display_name || item.user_username
                                 )}</p>
                             </div>
                         </div>
@@ -44,19 +42,6 @@ export class BiggestHitsComponent {
 
         this._bindBiggestHitsEvent();
     }
-
-    // _bindBiggestHitsEvent() {
-    //     this.container.addEventListener('click', async (e) => {
-    //         const hitCard = e.target.closest('.hit-card');
-    //         if (!hitCard) return;
-
-    //         const cardID = hitCard.dataset.id;
-    //         console.log(cardID);
-
-    //         const data = await albumsData.getAlbumById(cardID);
-    //         console.log(data);
-    //     });
-    // }
 
     _bindBiggestHitsEvent() {
         this.container.onclick = (e) => {

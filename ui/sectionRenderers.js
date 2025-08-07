@@ -1,4 +1,4 @@
-import { artistsData, albumsData, playerData } from '../data/index.js';
+import { artistsData, playerData, playlistsData } from '../data/index.js';
 import { handleTrackSelect } from '../main.js';
 
 import {
@@ -144,32 +144,36 @@ function getScrollbarWidth() {
 }
 
 // callback truyền vào BiggestHitsComponent
-async function handleHitCardClick(albumId) {
-    if (!albumId || albumId === 'undefined') return;
-    const albumInfo = await albumsData.getAlbumById(albumId);
-    const { tracks } = await albumsData.getAlbumTracks(albumId);
+async function handleHitCardClick(playlistId) {
+    try {
+        if (!playlistId || playlistId === 'undefined') return;
+        // const albumInfo = await albumsData.getAlbumById(playlistId);
+        // const { tracks } = await albumsData.getAlbumTracks(playlistId);
 
-    toggleDetailPanel(true);
-    updateUIWithInfoAndTracks(albumInfo, tracks);
-}
+        const playlistInfo = await playlistsData.getPlaylistById(playlistId);
+        // console.log('Playlist Info:', playlistInfo);
 
-// callback truyền vào ArtistsComponent
-async function handleArtistCardClick(artistId) {
-    if (!artistId || artistId === 'undefined') return;
-    const artistInfo = await artistsData.getArtistById(artistId);
-    const { tracks } = await artistsData.getArtistTracks(artistId);
+        const tracks = await playlistsData.getPlaylistTracks(playlistId);
+        // console.log('Playlist Tracks:', tracks);
 
-    toggleDetailPanel(true);
-    updateUIWithInfoAndTracks(artistInfo, tracks);
+        toggleDetailPanel(true);
+        updateUIWithInfoAndTracks(playlistInfo, tracks);
+    } catch (error) {
+        console.error('Error in handleHitCardClick:', error);
+        toggleDetailPanel(true);
+        // Update UI với info rỗng và tracks rỗng
+        updateUIWithInfoAndTracks({}, []);
+    }
 }
 
 export async function renderBiggestHitsSection() {
-    const { albums } = await albumsData.getAllAlbums();
+    const { playlists } = await playlistsData.getAllPlaylists();
+
     const hitsContainer = document.querySelector('.hits-grid');
 
     const biggestHitsComponent = new BiggestHitsComponent({
         container: hitsContainer,
-        biggestHits: albums,
+        biggestHits: playlists,
         onTrackClick: handleHitCardClick,
     });
 
@@ -189,4 +193,22 @@ export async function renderPopularArtistsSection() {
 
     // 4. Render vào UI
     popularArtistsComponent.render();
+}
+
+// callback truyền vào ArtistsComponent
+async function handleArtistCardClick(playlistId) {
+    try {
+        if (!playlistId || playlistId === 'undefined') return;
+        const artistInfo = await artistsData.getArtistById(playlistId);
+
+        const { tracks } = await artistsData.getArtistTracks(playlistId);
+
+        toggleDetailPanel(true);
+        updateUIWithInfoAndTracks(artistInfo, tracks);
+    } catch (error) {
+        console.error('Error in handleHitCardClick:', error);
+        toggleDetailPanel(true);
+        // Update UI với info rỗng và tracks rỗng
+        updateUIWithInfoAndTracks({}, []);
+    }
 }

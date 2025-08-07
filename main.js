@@ -1,6 +1,6 @@
 import { httpRequest } from './utils/index.js';
 import { playerData } from './data/index.js';
-import { initSignupForm } from './ui/components/Authentication/signupForm.js';
+import { SignupForm, LoginForm } from './ui/components/Authentication/index.js';
 
 import {
     getPlayerControllerInstance,
@@ -88,206 +88,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ======================= LOGIC START HERE =======================
-    // const authFormContent = signupForm.querySelector('.auth-form-content');
-    // const submitFormBtn = signupForm.querySelector('.auth-submit-btn');
-
-    // const email = document.querySelector('#signupEmail');
-    // const password = document.querySelector('#signupPassword');
-    // const eyeIcon = document.querySelector('#eye-icon');
-    // const userInfo = document.querySelector('.user-info');
-
-    // let isShowPassword = false;
-    // let isEmailValid = false;
-    // let isPasswordValid = false;
-
-    // // Handle UI of form input
-    // eyeIcon.onclick = () => {
-    //     isShowPassword = !isShowPassword;
-    //     if (isShowPassword) {
-    //         password.type = 'text';
-    //         eyeIcon.classList.remove('fa-eye-slash');
-    //         eyeIcon.classList.add('fa-eye');
-    //         eyeIcon.style.color = '#169c46';
-    //     } else {
-    //         password.type = 'password';
-    //         eyeIcon.classList.remove('fa-eye');
-    //         eyeIcon.classList.add('fa-eye-slash');
-    //         eyeIcon.style.color = '#b3b3b3';
-    //     }
-    // };
-
-    // email.oninput = () => {
-    //     hideInputError(email);
-    //     isEmailValid = isValidatedEmail(email.value);
-    //     toggleSubmitBtn();
-    //     hideBackendError();
-    // };
-
-    // email.onblur = () => {
-    //     if (email.value.trim() !== '' && !isValidatedEmail(email.value)) {
-    //         showInputError(email);
-    //     }
-    // };
-
-    // // Cứ mỗi lần user nhập, đều ẩn lỗi (dù còn hay hết text)
-    // password.oninput = () => {
-    //     hideInputError(password);
-    //     isPasswordValid = isValidatedPassword(password.value);
-    //     toggleSubmitBtn();
-    //     hideBackendError();
-    // };
-
-    // password.onblur = () => {
-    //     if (
-    //         password.value.trim() !== '' &&
-    //         !isValidatedPassword(password.value)
-    //     ) {
-    //         showInputError(password);
-    //     }
-    // };
-
-    // function toggleSubmitBtn() {
-    //     if (isEmailValid && isPasswordValid) {
-    //         submitFormBtn.disabled = false;
-    //         submitFormBtn.style.opacity = '1';
-    //         submitFormBtn.style.cursor = 'pointer';
-    //     } else {
-    //         submitFormBtn.disabled = true;
-    //         submitFormBtn.style.opacity = '0.3';
-    //         submitFormBtn.style.cursor = 'not-allowed';
-    //     }
-    // }
-
-    // // Submit Form
-    // authFormContent.addEventListener('submit', async (e) => {
-    //     const modalHeading = signupForm.querySelector('.modal-heading');
-    //     const authErrorMessage = signupForm.querySelector('.auth-error');
-
-    //     e.preventDefault();
-
-    //     // K.tra các fields đã hợp lệ chưa mới đến bước này
-    //     const credentials = {
-    //         email: email.value,
-    //         password: password.value,
-    //     };
-
-    //     try {
-    //         const { user, access_token } = await httpRequest.post(
-    //             'auth/register',
-    //             credentials
-    //         );
-    //         console.log(user, access_token);
-
-    //         // Avoid flashing later after getting user's info
-    //         localStorage.setItem('currentUser', JSON.stringify(user));
-    //         localStorage.setItem('accessToken', access_token);
-
-    //         updateCurrentUserAvatar(user);
-    //         showToast('Sign Up Successfully');
-    //         authModal.classList.remove('show');
-    //         authBtns.classList.remove('show');
-    //         userInfo.classList.add('show');
-    //         authFormContent.reset();
-    //     } catch (error) {
-    //         console.dir(error);
-
-    //         const msg = extractBackendErrorMsg(error);
-    //         authErrorMessage.textContent = msg;
-    //         authErrorMessage.style.display = 'block';
-    //         modalHeading.style.marginBottom = '16px';
-    //     }
-    // });
-
-    // function extractBackendErrorMsg(error) {
-    //     // Ưu tiên lỗi BE trả về có details dạng array (đa lỗi)
-    //     if (
-    //         error?.response?.error?.details &&
-    //         Array.isArray(error.response.error.details)
-    //     ) {
-    //         return error.response.error.details
-    //             .map((detail) => detail.message)
-    //             .join(', ');
-    //     }
-    //     // Nếu có message (lỗi đơn, hoặc lỗi logic khác)
-    //     if (error?.response?.error?.message) {
-    //         return error.response.error.message;
-    //     }
-    //     // Nếu BE trả về message ngoài cùng (không nằm trong error object)
-    //     if (error?.response?.message) {
-    //         return error.response.message;
-    //     }
-    //     // Fallback cuối cùng (lỗi mạng, không xác định)
-    //     return 'Đã xảy ra lỗi. Vui lòng thử lại.';
-    // }
-
-    // function isValidatedEmail(email) {
-    //     const regex = new RegExp('^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,}$');
-    //     return regex.test(email);
-    // }
-
-    // function isValidatedPassword(password) {
-    //     const regex = new RegExp(
-    //         '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{6,}$'
-    //     );
-    //     return regex.test(password);
-    // }
-
-    // function hideInputError(element) {
-    //     element.closest('.form-group').classList.remove('invalid');
-    // }
-
-    // function showInputError(element) {
-    //     element.closest('.form-group').classList.add('invalid');
-    // }
-
-    // function hideBackendError() {
-    //     const modalHeading = signupForm.querySelector('.modal-heading');
-    //     const authErrorMessage = signupForm.querySelector('.auth-error');
-
-    //     authErrorMessage.textContent = '';
-    //     authErrorMessage.style.display = 'none';
-    //     modalHeading.style.marginBottom = '48px';
-    // }
-
-    // function showToast(message, type = 'success') {
-    //     const toastContainer = document.querySelector('#toast-container');
-    //     const icons = {
-    //         success: 'fa-solid fa-circle-check',
-    //         updated: 'fa-solid fa-bullhorn',
-    //         deleted: 'fa-solid fa-circle-exclamation',
-    //     };
-    //     const icon = icons[type];
-
-    //     const toast = document.createElement('div');
-    //     toast.className = `toast toast-${type}`;
-    //     toast.style.animation = `slideIn 0.3s ease-out, fadeOut 0.6s ease-in 6s forwards`;
-
-    //     toast.innerHTML = ` <span class="toast-icon">
-    //     <i class="${icon}"></i>
-    //     </span>
-    //     <div class="toast-message">${message}</div>
-    //     <button class="toast-close">&times;</button>`;
-
-    //     // Auto dismiss
-    //     const autoDismissId = setTimeout(() => {
-    //         toast.remove();
-    //     }, 7000);
-
-    //     // Close on click
-    //     toast.querySelector('.toast-close').onclick = () => {
-    //         toast.remove();
-    //         clearTimeout(autoDismissId);
-    //     };
-
-    //     toastContainer.appendChild(toast);
-    // }
-
-    initSignupForm({
+    new SignupForm({
         signupForm,
         authModal,
         authBtns,
         updateCurrentUserAvatar,
     });
+
+    new LoginForm({ loginForm, authModal, authBtns, updateCurrentUserAvatar });
 });
 
 // User Menu Dropdown Functionality
@@ -320,13 +128,30 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Handle logout button click
-    logoutBtn.addEventListener('click', function () {
+    logoutBtn.addEventListener('click', handleLogout);
+
+    async function handleLogout() {
+        try {
+            await httpRequest.post('auth/logout');
+        } catch (error) {
+            // Có thể log hoặc toast lỗi, nhưng thường vẫn tiếp tục logout local
+            console.log(error);
+        }
         // Close dropdown first
         userDropdown.classList.remove('show');
 
-        console.log('Logout clicked');
-        // TODO: Students will implement logout logic here
-    });
+        // Xoá localStorage
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('currentUser');
+
+        // Ẩn user info, show lại nút đăng nhập/đăng ký
+
+        document.querySelector('.user-info').classList.remove('show');
+        document.querySelector('.auth-buttons').classList.add('show');
+
+        // Chuyển về trang chủ
+        window.location.href = '/'; // hoặc renderHome() nếu không reload trang
+    }
 });
 
 // Other functionality
@@ -363,14 +188,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const authBtns = document.querySelector('.auth-buttons');
     const userInfo = document.querySelector('.user-info');
 
-    try {
-        // Nếu đã đăng nhập (có token hợp lệ trong localStorage)
-        const { user } = await httpRequest.get('users/me');
-        userInfo.classList.add('show');
-        updateCurrentUserAvatar(user);
-
-        console.log(user);
-    } catch (error) {
+    const accessToken = localStorage.getItem('accessToken');
+    // Chỉ gọi khi có token!
+    if (accessToken) {
+        try {
+            // Nếu đã đăng nhập (có token hợp lệ trong localStorage) ⇒ Hiển thị avatar và menu người dùng
+            const { user } = await httpRequest.get('users/me');
+            userInfo.classList.add('show');
+            updateCurrentUserAvatar(user);
+        } catch (error) {
+            // Nếu token hết hạn/lỗi vẫn fallback về trạng thái chưa đăng nhập
+            authBtns.classList.add('show');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('currentUser');
+        }
+    } else {
+        // Không có token ⇒ Chỉ hiển thị nút đăng nhập/đăng ký.
         authBtns.classList.add('show');
     }
 });

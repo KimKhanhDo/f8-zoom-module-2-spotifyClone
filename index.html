@@ -220,6 +220,7 @@
                         </div>
                     </div>
                     <div class="header-actions">
+                        <!-- Auth Btns -->
                         <div class="auth-buttons">
                             <button class="auth-btn signup-btn">Sign up</button>
                             <button class="auth-btn login-btn">Log in</button>
@@ -238,18 +239,81 @@
                                 </button>
                             </div>
 
-                            <div
+                            <!-- User Dropdown Menu -->
+                            <ul
                                 class="user-dropdown"
                                 id="userDropdown"
                             >
-                                <div
-                                    class="dropdown-item"
-                                    id="logoutBtn"
-                                >
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Log out</span>
-                                </div>
-                            </div>
+                                <li>
+                                    <a
+                                        href="#"
+                                        class="dropdown-item"
+                                    >
+                                        <span>Account</span>
+                                        <i
+                                            class="fas fa-up-right-from-square dropdown-external"
+                                        ></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="#"
+                                        class="dropdown-item"
+                                    >
+                                        <span>Profile</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="#"
+                                        class="dropdown-item"
+                                    >
+                                        <span>Upgrade to Premium</span>
+                                        <i
+                                            class="fas fa-up-right-from-square dropdown-external"
+                                        ></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="#"
+                                        class="dropdown-item"
+                                    >
+                                        <span>Support</span>
+                                        <i
+                                            class="fas fa-up-right-from-square dropdown-external"
+                                        ></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="#"
+                                        class="dropdown-item"
+                                    >
+                                        <span>Download</span>
+                                        <i
+                                            class="fas fa-up-right-from-square dropdown-external"
+                                        ></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="#"
+                                        class="dropdown-item"
+                                    >
+                                        <span>Settings</span>
+                                    </a>
+                                </li>
+                                <li class="dropdown-divider"></li>
+                                <li>
+                                    <button
+                                        class="dropdown-item logout-btn"
+                                        id="logoutBtn"
+                                    >
+                                        <span>Log out</span>
+                                    </button>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </header>
@@ -633,6 +697,7 @@
                     <div
                         class="auth-form"
                         id="signupForm"
+                        style="display: none"
                     >
                         <h1 class="modal-heading">
                             Sign up to start listening
@@ -708,43 +773,41 @@
                     <div
                         class="auth-form"
                         id="loginForm"
-                        style="display: none"
                     >
                         <h1 class="modal-heading">Log in to Spotify</h1>
+                        <div class="auth-error">
+                            <span>BE error display here</span>
+                        </div>
 
                         <form class="auth-form-content">
-                            <div class="form-group invalid">
+                            <div class="form-group">
                                 <input
                                     type="email"
                                     placeholder="Email address"
                                     class="form-input"
                                     id="loginEmail"
                                 />
-                                <div class="error-message">
-                                    <i class="fas fa-info-circle"></i>
-                                    <span
-                                        >Please enter a valid email
-                                        address</span
-                                    >
-                                </div>
                             </div>
 
                             <div class="form-group">
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    class="form-input"
-                                    id="loginPassword"
-                                />
-                                <div class="error-message">
-                                    <i class="fas fa-info-circle"></i>
-                                    <span>Please enter your password</span>
+                                <div class="form-password">
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        class="form-input"
+                                        id="loginPassword"
+                                    />
+                                    <i
+                                        class="eye-icon fa-regular fa-eye-slash"
+                                        id="eye-icon"
+                                    ></i>
                                 </div>
                             </div>
 
                             <button
                                 type="submit"
                                 class="auth-submit-btn"
+                                disabled
                             >
                                 Log In
                             </button>
