@@ -24,7 +24,7 @@ export function showToast(message, type = 'success') {
     const icons = {
         success: 'fa-solid fa-circle-check',
         updated: 'fa-solid fa-bullhorn',
-        deleted: 'fa-solid fa-circle-exclamation',
+        error: 'fa-solid fa-circle-exclamation',
     };
     const icon = icons[type];
 

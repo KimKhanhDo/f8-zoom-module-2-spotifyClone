@@ -1596,6 +1596,15 @@
     font-size: 18px;
 }
 
+.toast-error {
+    border-color: #f87171;
+}
+
+.toast-error .toast-icon {
+    color: #f87171;
+    font-size: 18px;
+}
+
 @keyframes slideIn {
     from {
         transform: translateX(calc(100% + 32px));

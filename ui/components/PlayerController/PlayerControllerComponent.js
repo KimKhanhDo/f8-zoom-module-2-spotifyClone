@@ -12,6 +12,7 @@ export class PlayerControllerComponent {
         this.audio = null;
         this.isLoop = false;
         this.isRandom = false;
+        this.isAutoPlayEnabled = false;
         this.PREV_RESTART_THRESHOLD = 2;
         this.onTrackChange = onTrackChange; // Lưu callback
 
@@ -74,7 +75,9 @@ export class PlayerControllerComponent {
 
         // LUÔN auto play khi next/prev hoặc load bài mới
         this.audio.oncanplay = () => {
-            this.audio.play();
+            if (this.isAutoPlayEnabled) {
+                this.audio.play();
+            }
         };
 
         this.audio.onplay = () => this._updatePlayPauseIcon(true);
@@ -95,6 +98,7 @@ export class PlayerControllerComponent {
         if (!this.audio) return;
 
         if (this.audio.paused) {
+            this.isAutoPlayEnabled = true;
             this.audio.play();
         } else {
             this.audio.pause();
@@ -103,10 +107,12 @@ export class PlayerControllerComponent {
 
     // ======================= Track navigation ======================
     handleNextTrack() {
+        this.isAutoPlayEnabled = true;
         this._navigateTrack('next');
     }
 
     handlePreviousTrack() {
+        this.isAutoPlayEnabled = true;
         this._navigateTrack('previous');
     }
 

@@ -1,6 +1,7 @@
 import { httpRequest } from './utils/index.js';
 import { playerData } from './data/index.js';
 import { SignupForm, LoginForm } from './ui/components/Authentication/index.js';
+import { CreatePlaylistComponent } from './ui/components/SideBar/index.js';
 
 import {
     getPlayerControllerInstance,
@@ -206,6 +207,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Không có token ⇒ Chỉ hiển thị nút đăng nhập/đăng ký.
         authBtns.classList.add('show');
     }
+
+    // create playlist component
+    new CreatePlaylistComponent();
 });
 
 // =================== HELPER FUNCTIONS ===================
