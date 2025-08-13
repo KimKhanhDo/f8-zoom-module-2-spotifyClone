@@ -4,7 +4,7 @@ export function initSignupForm({
     signupForm,
     authModal,
     authBtns,
-    updateCurrentUserAvatar,
+    setUserAvatarInitial,
 }) {
     const authFormContent = signupForm.querySelector('.auth-form-content');
     const submitFormBtn = signupForm.querySelector('.auth-submit-btn');
@@ -102,7 +102,7 @@ export function initSignupForm({
     }
 
     function handleAfterSignupSuccess(user) {
-        updateCurrentUserAvatar(user);
+        setUserAvatarInitial(user);
         helpers.showToast('Sign Up Successfully');
 
         authModal.classList.remove('show');

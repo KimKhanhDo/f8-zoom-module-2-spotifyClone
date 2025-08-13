@@ -4,4 +4,3 @@ export { ArtistHeroComponent } from './ArtistHero/ArtistHeroComponent.js';
 export { PopularArtistsComponent } from './PopularArtist/PopularArtistsComponent.js';
 export { PopularTracksComponent } from './PopularTracks/PopularTracksComponent.js';
 export { BiggestHitsComponent } from './BiggestHits/BiggestHitsComponent.js';
-export { SidebarComponent } from './SideBar/SidebarComponent.js';

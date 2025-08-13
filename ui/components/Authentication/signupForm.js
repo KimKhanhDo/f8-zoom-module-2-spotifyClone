@@ -2,21 +2,23 @@ import { httpRequest } from '../../../utils/index.js';
 import * as authHelpers from './index.js';
 
 export class SignupForm {
-    constructor({ signupForm, authModal, authBtns, updateCurrentUserAvatar }) {
+    constructor({ signupForm, authModal, authBtns, setUserAvatarInitial }) {
         this.signupForm = signupForm;
         this.authModal = authModal;
         this.authBtns = authBtns;
-        this.updateCurrentUserAvatar = updateCurrentUserAvatar;
+        this.setUserAvatarInitial = setUserAvatarInitial;
 
         this.userInfo = document.querySelector('.user-info');
         this.authFormContent = signupForm.querySelector('.auth-form-content');
         this.submitFormBtn = signupForm.querySelector('.auth-submit-btn');
+        this.username = signupForm.querySelector('#signupUsername');
         this.email = signupForm.querySelector('#signupEmail');
         this.password = signupForm.querySelector('#signupPassword');
         this.eyeIcon = signupForm.querySelector('.eye-icon');
 
         // State
         this.isShowPassword = false;
+        this.isUsernameValid = false;
         this.isEmailValid = false;
         this.isPasswordValid = false;
 
@@ -31,6 +33,25 @@ export class SignupForm {
                 passwordInput: this.password,
                 eyeIcon: this.eyeIcon,
             });
+        };
+
+        // Username validate
+        this.username.oninput = () => {
+            this.hideInputError(this.username);
+            this.isUsernameValid = authHelpers.isValidatedUsername(
+                this.username.value
+            );
+            this.toggleSubmitBtn();
+            authHelpers.hideBackendError(this.signupForm);
+        };
+
+        this.username.onblur = () => {
+            if (
+                this.username.value.trim() !== '' &&
+                !authHelpers.isValidatedUsername(this.username.value)
+            ) {
+                this.showInputError(this.username);
+            }
         };
 
         // Email validate
@@ -76,7 +97,7 @@ export class SignupForm {
     }
 
     toggleSubmitBtn() {
-        if (this.isEmailValid && this.isPasswordValid) {
+        if (this.isEmailValid && this.isPasswordValid && this.isUsernameValid) {
             this.submitFormBtn.disabled = false;
             this.submitFormBtn.style.opacity = '1';
             this.submitFormBtn.style.cursor = 'pointer';
@@ -90,6 +111,7 @@ export class SignupForm {
     async handleSubmitForm(e) {
         e.preventDefault();
         const credentials = {
+            username: this.username.value,
             email: this.email.value,
             password: this.password.value,
         };
@@ -103,7 +125,7 @@ export class SignupForm {
             localStorage.setItem('accessToken', access_token);
             authHelpers.handleAfterAuthSuccess({
                 user,
-                updateCurrentUserAvatar: this.updateCurrentUserAvatar,
+                setUserAvatarInitial: this.setUserAvatarInitial,
                 toastMsg: 'Sign Up Successfully',
                 authModal: this.authModal,
                 authBtns: this.authBtns,

@@ -1,10 +1,11 @@
-import { playlists, artists } from '../../../mockSidebarData.js';
-
 export class SearchLibraryComponent {
-    constructor(container, onSearch) {
+    constructor(container, onResultsUpdate) {
         this.container = container;
         this.isSearchOpen = false;
-        this.onSearch = onSearch; // nhận callback từ Sidebar
+        this.onResultsUpdate = onResultsUpdate; // nhận callback từ Sidebar
+
+        this.basePlaylists = [];
+        this.baseArtists = [];
 
         this._initElements();
         this._bindEvents();
@@ -46,8 +47,12 @@ export class SearchLibraryComponent {
             this._filterLibraryData(searchText);
 
         // Gọi callback để báo cho Sidebar cập nhật UI
-        if (typeof this.onSearch === 'function') {
-            this.onSearch(filteredPlaylists, filteredArtists, searchText);
+        if (typeof this.onResultsUpdate === 'function') {
+            this.onResultsUpdate(
+                filteredPlaylists,
+                filteredArtists,
+                searchText
+            );
         }
     }
 
@@ -57,22 +62,16 @@ export class SearchLibraryComponent {
 
         if (!searchText) {
             // Nếu không nhập gì, trả lại toàn bộ
-            filteredPlaylists = playlists;
-            filteredArtists = artists;
+            filteredPlaylists = this.basePlaylists;
+            filteredArtists = this.baseArtists;
         } else {
             // Nếu có nhập, lọc theo tên hoặc subtitle
-            filteredPlaylists = playlists.filter((item) => {
-                return (
-                    item.name.toLowerCase().includes(searchText) ||
-                    item.subtitle.toLowerCase().includes(searchText)
-                );
+            filteredPlaylists = this.basePlaylists.filter((item) => {
+                return item.name.toLowerCase().includes(searchText);
             });
 
-            filteredArtists = artists.filter((item) => {
-                return (
-                    item.name.toLowerCase().includes(searchText) ||
-                    item.subtitle.toLowerCase().includes(searchText)
-                );
+            filteredArtists = this.baseArtists.filter((item) => {
+                return item.name.toLowerCase().includes(searchText);
             });
         }
 
@@ -111,5 +110,13 @@ export class SearchLibraryComponent {
             //* Gọi lại logic filter để trả về kết quả full -> Giao diện hiển thị lại như lúc đầu
             this._handleSearchInput();
         }
+    }
+
+    setBaseData(playlists, artists) {
+        this.basePlaylists = playlists || [];
+        this.baseArtists = artists || [];
+
+        // lần đầu: trả full về Sidebar (chưa search)
+        this.onResultsUpdate?.(this.basePlaylists, this.baseArtists, '');
     }
 }

@@ -10,7 +10,6 @@ export class ArtistHeroComponent {
 
         let artistName = data.name || 'Unknown Artist';
         let coverImage = data.image_url || 'placeholder.svg';
-        // let playCount = data.monthly_listeners || '';
         let isVerified = data.is_verified;
 
         // Tạo HTML string (template)

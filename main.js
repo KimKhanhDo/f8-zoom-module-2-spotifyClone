@@ -1,7 +1,6 @@
-import { httpRequest } from './utils/index.js';
+import { httpRequest, helpers, setupTooltip } from './utils/index.js';
 import { playerData } from './data/index.js';
 import { SignupForm, LoginForm } from './ui/components/Authentication/index.js';
-import { CreatePlaylistComponent } from './ui/components/SideBar/index.js';
 
 import {
     getPlayerControllerInstance,
@@ -11,6 +10,7 @@ import {
     renderSidebarLeftSection,
     toggleDetailPanel,
 } from './ui/sectionRenderers.js';
+import { showToast } from './utils/helpers.js';
 
 // Auth Modal Functionality
 document.addEventListener('DOMContentLoaded', function () {
@@ -93,15 +93,17 @@ document.addEventListener('DOMContentLoaded', function () {
         signupForm,
         authModal,
         authBtns,
-        updateCurrentUserAvatar,
+        setUserAvatarInitial,
     });
 
-    new LoginForm({ loginForm, authModal, authBtns, updateCurrentUserAvatar });
+    new LoginForm({ loginForm, authModal, authBtns, setUserAvatarInitial });
 });
 
 // User Menu Dropdown Functionality
 document.addEventListener('DOMContentLoaded', function () {
     const userAvatar = document.getElementById('userAvatar');
+    const userCoverInput = document.getElementById('user-cover-input');
+    const userName = document.getElementById('user-name');
     const userDropdown = document.getElementById('userDropdown');
     const logoutBtn = document.getElementById('logoutBtn');
 
@@ -128,6 +130,78 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Open file input for upload/ change avatar
+    userDropdown.onclick = (e) => {
+        const isChangeAvatar = e.target.closest('#change-avatar');
+        if (isChangeAvatar) {
+            userCoverInput.value = '';
+            userCoverInput.click();
+        }
+    };
+
+    // Handle preview avatar
+    userCoverInput.addEventListener('change', handleAndUpdateFileChange);
+
+    async function handleAndUpdateFileChange() {
+        const file = userCoverInput.files?.[0];
+        if (!file) return;
+
+        try {
+            // 1) Upload file
+            const form = new FormData();
+            form.append('avatar', file);
+
+            const res = await httpRequest.post('upload/avatar', form);
+            console.log(res);
+
+            if (!res?.file?.url) {
+                helpers.showToast(
+                    'Upload failed. Please try another image.',
+                    'error'
+                );
+                throw new Error('Upload failed. Please try another image.');
+            }
+
+            const uploadedImageUrl = `https://spotify.f8team.dev${res.file.url}`;
+
+            // 2) Cập nhật hồ sơ
+            const updateRes = await httpRequest.put('users/me', {
+                avatar_url: uploadedImageUrl,
+            });
+
+            if (!updateRes || updateRes.error) {
+                helpers.showToast(
+                    'Upload failed. Please try another image.',
+                    'error'
+                );
+                throw new Error(
+                    updateRes?.message || 'Update failed. Please try again.'
+                );
+            }
+
+            // 3) Lưu cache để giữ ảnh sau reload
+            const currentUser = JSON.parse(
+                localStorage.getItem('currentUser') || '{}'
+            );
+
+            const updatedUser = {
+                ...currentUser,
+                avatar_url: uploadedImageUrl,
+            };
+
+            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+
+            // 4) Cập nhật UI (ẩn ký tự, hiển thị ảnh)
+            setUserAvatarInitial(updatedUser);
+        } catch (error) {
+            console.log(error);
+            showToast(error?.message, 'error');
+        } finally {
+            // Cho phép lần sau chọn lại cùng file
+            userCoverInput.value = '';
+        }
+    }
+
     // Handle logout button click
     logoutBtn.addEventListener('click', handleLogout);
 
@@ -146,12 +220,11 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.removeItem('currentUser');
 
         // Ẩn user info, show lại nút đăng nhập/đăng ký
-
         document.querySelector('.user-info').classList.remove('show');
         document.querySelector('.auth-buttons').classList.add('show');
 
         // Chuyển về trang chủ
-        window.location.href = '/'; // hoặc renderHome() nếu không reload trang
+        window.location.assign('./');
     }
 });
 
@@ -161,24 +234,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get DOM elements
     const homeBtn = document.querySelector('.home-btn');
     const logo = document.querySelector('.logo');
-    const recentMenu = document.querySelector('.recent-context-menu');
-    const sortBtn = document.querySelector('.sort-btn');
 
     // Render sidebar và các section phụ
-    renderSidebarLeftSection();
+    // renderSidebarLeftSection();
     renderBiggestHitsSection();
     renderPopularArtistsSection();
 
     // Assign event cho icon Home & Spotify
+    // setupTooltip();
     homeBtn.onclick = () => toggleDetailPanel(false);
-    logo.onclick = () => toggleDetailPanel(false);
-
-    // Test cho nút sort
-    sortBtn.onclick = () => {
-        recentMenu.classList.toggle('show');
+    logo.onclick = () => {
+        toggleDetailPanel(false);
+        document
+            .querySelector('.playlist-form-overlay')
+            ?.classList.remove('show');
     };
-
-    setupAutoCloseContextMenu('.recent-context-menu', '.sort-btn');
 
     // Tạo player controller & truyền callback khi đổi bài
     playerController = getPlayerControllerInstance(onPlayerTrackChange);
@@ -196,7 +266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Nếu đã đăng nhập (có token hợp lệ trong localStorage) ⇒ Hiển thị avatar và menu người dùng
             const { user } = await httpRequest.get('users/me');
             userInfo.classList.add('show');
-            updateCurrentUserAvatar(user);
+            setUserAvatarInitial(user);
         } catch (error) {
             // Nếu token hết hạn/lỗi vẫn fallback về trạng thái chưa đăng nhập
             authBtns.classList.add('show');
@@ -207,9 +277,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Không có token ⇒ Chỉ hiển thị nút đăng nhập/đăng ký.
         authBtns.classList.add('show');
     }
-
-    // create playlist component
-    new CreatePlaylistComponent();
 });
 
 // =================== HELPER FUNCTIONS ===================
@@ -275,15 +342,26 @@ function setupAutoCloseContextMenu(
     });
 }
 
-function extractUserName(email) {
-    return email.charAt(0).toUpperCase();
-}
-
 // Hàm để hiển thị thông tin user
-function updateCurrentUserAvatar(user) {
+function setUserAvatarInitial(user) {
     const userName = document.querySelector('#user-name');
+    const userAvatar = document.querySelector('#userAvatar');
 
-    if (user.email) {
-        userName.textContent = extractUserName(user.email);
+    const displayName = helpers.extractUserName(
+        user?.username || user.email || 'User'
+    );
+
+    if (user?.avatar_url) {
+        userAvatar.style.backgroundImage = `url(${user.avatar_url})`;
+        userAvatar.style.backgroundSize = 'cover';
+        userAvatar.style.backgroundPosition = 'center';
+        userName.style.display = 'none';
+    } else {
+        userName.textContent = displayName;
+        userAvatar.style.backgroundImage = '';
+        userName.style.display = '';
     }
+
+    userAvatar.dataset.tooltip = displayName;
+    renderSidebarLeftSection();
 }

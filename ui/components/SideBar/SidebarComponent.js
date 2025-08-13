@@ -1,19 +1,60 @@
-import { playlists, artists } from '../../../mockSidebarData.js';
+import { playlistsData, artistsData } from '../../../data/index.js';
 import { SearchLibraryComponent } from './SearchLibraryComponent.js';
+import { helpers, httpRequest } from '../../../utils/index.js';
 
 const TAB_ALL = 'all';
 const TAB_PLAYLISTS = 'playlists';
 const TAB_ARTISTS = 'artists';
 
+const SORT_RECENT = 'recent';
+const SORT_RECENTLY_ADDED = 'recently-added';
+const SORT_ALPHABETICAL = 'alphabetical';
+const SORT_CREATOR = 'creator';
+
+const SORT_TEXT = {
+    [SORT_RECENT]: 'Recent',
+    [SORT_RECENTLY_ADDED]: 'Recently Added',
+    [SORT_ALPHABETICAL]: 'Alphabetical',
+    [SORT_CREATOR]: 'Creator',
+};
+
+/* ============== VIEW MODES ============== */
+const VIEW_COMPACT_LIST = 'compact-list';
+const VIEW_DEFAULT_LIST = 'default-list';
+const VIEW_COMPACT_GRID = 'compact-grid';
+const VIEW_DEFAULT_GRID = 'default-grid';
+
+/* Icon nhỏ trên nút view (trên cùng, cạnh sort-text) */
+const VIEW_ICON = {
+    [VIEW_COMPACT_LIST]: 'fa-bars',
+    [VIEW_DEFAULT_LIST]: 'fa-list',
+    [VIEW_COMPACT_GRID]: 'fa-th',
+    [VIEW_DEFAULT_GRID]: 'fa-th-large',
+};
+
 export class SidebarComponent {
-    constructor(container) {
+    constructor(container, onOpenPlaylistEditor = null) {
         this.container = container; // DOM element cha -> '.sidebar'
         this.currentTab = TAB_ALL;
 
+        // Sort & View
+        this.sortMode = SORT_RECENT;
+        this.viewMode = VIEW_DEFAULT_LIST; // yêu cầu: mặc định luôn default-list
+
+        this.onOpenPlaylistEditor = onOpenPlaylistEditor; // ← callback mở modal edit
+
         // Khởi tạo state: danh sách kết quả hiện tại (mặc định là toàn bộ)
-        this.playlistResults = playlists;
-        this.artistResults = artists;
+        this.playlistResults = [];
+        this.artistResults = [];
         this.searchQuery = '';
+
+        // Cache DOM & gắn event cho menu Sort + View
+        this._initSortDom();
+        this._bindSortEvents();
+
+        // cache các DOM liên quan context menu
+        this._initContextMenuDom();
+        this._bindContextMenuEvents();
 
         // Tạo SearchLibraryComponent và truyền callback updateResults vào để nhận kết quả tìm kiếm mới
         this.searchLibrary = new SearchLibraryComponent(
@@ -21,8 +62,16 @@ export class SidebarComponent {
             this.updateResults.bind(this)
         );
 
-        // Luôn render lần đầu toàn bộ giao diện sidebar
-        this.renderSidebar();
+        // Đồng bộ UI lần đầu (icon view + active + container class + nhãn sort)
+        this._syncViewUiState();
+        if (this.sortText) this.sortText.textContent = SORT_TEXT[this.sortMode];
+
+        this.reloadLibrary();
+
+        // lắng sự kiện đồng bộ lại library khi playlist đổi
+        // e.detail = { action: 'created'|'updated', playlist: {...} }
+        this._onPlaylistChanged = (e) => this.reloadLibrary();
+        document.addEventListener('playlist:changed', this._onPlaylistChanged);
     }
 
     // Callback được SearchLibraryComponent gọi khi có kết quả tìm kiếm mới
@@ -37,9 +86,24 @@ export class SidebarComponent {
         let contentHtml = '';
 
         // Xác định dữ liệu thực tế sẽ render ra UI (có thể là tất cả hoặc đã được lọc)
-        const displayedPlaylists = this.playlistResults;
-        const displayedArtists = this.artistResults;
+        // Clone mảng gốc để sort/filter mà không ảnh hưởng tới state gốc
+        const displayedPlaylists = this.playlistResults.slice();
+        const displayedArtists = this.artistResults.slice();
         const isSearching = !!this.searchQuery;
+
+        // Áp sort dựa trên mode hiện tại
+        this._applySort(displayedPlaylists, displayedArtists, this.sortMode);
+
+        // ===== CSS theo view mode =====
+        // - Gắn data-view để CSS trong index.html áp layout tương ứng
+        // - Toggle class 'grid' cho 2 mode grid
+        if (this.libraryContentEl) {
+            this.libraryContentEl.dataset.view = this.viewMode;
+            const isGrid =
+                this.viewMode === VIEW_COMPACT_GRID ||
+                this.viewMode === VIEW_DEFAULT_GRID;
+            this.libraryContentEl.classList.toggle('grid', isGrid);
+        }
 
         // Kiểm tra: nếu đang search mà không tìm thấy kết quả nào
         // User đã nhập search & ko tìm được playlist hoặc artist nào
@@ -108,52 +172,116 @@ export class SidebarComponent {
         return items;
     }
 
-    // Render từng playlist item
+    // Render từng playlist item (render theo view mode đã chọn)
     _renderPlaylistItem(item) {
-        if (item.isPinned) {
-            return `
-             <div class="library-item active">
-                <div class="item-icon liked-songs">
-                    <i class="fas fa-heart"></i>
+        const name = helpers.escapeHTML(item.name || 'My Playlist');
+        const owner = helpers.escapeHTML(
+            item.user_display_name || item.user_username || 'Me'
+        );
+        const image = helpers.escapeHTML(item.image_url || 'placeholder.svg');
+        const id = helpers.escapeHTML(item.id);
+
+        switch (this.viewMode) {
+            // ===== Compact list =====
+            case VIEW_COMPACT_LIST:
+                return `
+                <div class="library-item compact-item" data-type="playlist" data-id="${id}">
+                    <p class="item-title compact-title">${name}</p>
+                    <span class="item-subtitle compact-subtitle">Playlist • ${owner}</span>
                 </div>
-                <div class="item-info">
-                    <div class="item-title">${item.name}</div>
-                    <div class="item-subtitle">
-                          ${
-                              item.isPinned
-                                  ? '<i class="fas fa-thumbtack"></i>'
-                                  : ''
-                          }
-                    ${item.subtitle}
-                    </div>
-                </div>
-            </div>
-            `;
-        } else {
-            // Playlist bình thường (có hình đại diện)
-            return `
-        <div class="library-item">
-            <img src="${item.image}" alt="${item.name}" class="item-image"/>
+                `;
+
+            // ===== Default list =====
+            case VIEW_DEFAULT_LIST:
+                return `
+        <div class="library-item" data-type="playlist" data-id=${id}>
+            <img src="${image}" alt="${name}" class="item-image"/>
             <div class="item-info">
-                <div class="item-title">${item.name}</div>
-                <div class="item-subtitle">${item.subtitle}</div>
+                <div class="item-title">${name}</div>
+                <div class="item-subtitle">
+                 <i class="fas fa-thumbtack"></i>
+               ${` Playlist • ${owner}`}
+                </div>
             </div>
         </div>
         `;
+
+            // ===== Compact grid =====
+            case VIEW_COMPACT_GRID:
+                return `
+                <div class="library-item compact-grid" data-type="playlist" data-id="${id}">
+                    <img src="${image}" alt="${name}" class="compact-img"/>
+                </div>
+                `;
+
+            // ===== Default grid ===== (GIỮ grid-play-btn như bạn yêu cầu)
+            case VIEW_DEFAULT_GRID:
+                return `
+                <div class="library-item default-grid" data-type="playlist" data-id="${id}">
+                    <div class="thumb thumb--rounded">
+                        <img src="${image}" alt="${name}" class="thumb-img"/>
+                        <button class="grid-play-btn"><i class="fa-solid fa-play"></i></button>
+                    </div>
+                    <div class="meta">
+                        <div class="item-title grid-title">${name}</div>
+                        <div class="item-subtitle grid-subtitle">Playlist • ${owner}</div>
+                    </div>
+                </div>
+                `;
         }
     }
 
-    // Render từng artist item
+    // Render từng artist item (render theo view mode đã chọn)
     _renderArtistItem(item) {
-        return `
-    <div class="library-item">
-        <img src="${item.image}" alt="${item.name}" class="item-image"/>
+        const name = helpers.escapeHTML(item.name || 'Unknown Artist');
+        const image = helpers.escapeHTML(item.image_url || 'placeholder.svg');
+        const id = helpers.escapeHTML(item.id);
+
+        switch (this.viewMode) {
+            // ===== Compact list =====
+            case VIEW_COMPACT_LIST:
+                return `
+                <div class="library-item compact-item" data-type="artist" data-id="${id}">
+                    <p class="item-title compact-title">${name}</p>
+                    <span class="item-subtitle compact-subtitle">Artist</span>
+                </div>
+                `;
+
+            // ===== Default list =====
+            case VIEW_DEFAULT_LIST:
+                return `
+    <div class="library-item" data-type="artist" data-id=${id}>
+        <img src="${image}" alt="${name}" class="item-image"/>
         <div class="item-info">
-            <div class="item-title">${item.name}</div>
-            <div class="item-subtitle">${item.subtitle}</div>
+            <div class="item-title">${name}</div>
+            <div class="item-subtitle">Artist</div>
         </div>
     </div>
     `;
+
+            // ===== Compact grid =====
+            case VIEW_COMPACT_GRID:
+                return `
+                <div class="library-item compact-grid" data-type="artist" data-id="${id}">
+                    <img src="${image}" alt="${name}" class="compact-img" style="border-radius:50%"/>
+                </div>
+                `;
+
+            // ===== Default grid ===== (GIỮ grid-play-btn)
+            case VIEW_DEFAULT_GRID:
+                return `
+                <div class="library-item default-grid" data-type="artist" data-id="${id}">
+                    <div class="thumb thumb--circle">
+                        <img src="${image}" alt="${name}" class="thumb-img"/>
+                        <button class="grid-play-btn"><i class="fa-solid fa-play"></i></button>
+                    </div>
+                    <div class="meta">
+                        <div class="item-title grid-title">${name}</div>
+                        <div class="item-subtitle grid-subtitle">Artist</div>
+                    </div>
+                </div>
+                `;
+        }
     }
 
     _renderTabs(currentTab, displayedPlaylists, displayedArtists, isSearching) {
@@ -235,6 +363,373 @@ export class SidebarComponent {
                 this.currentTab = TAB_ALL;
                 this.renderSidebar();
             };
+        }
+    }
+
+    /**
+     * Luồng render Sidebar:
+     * 1) constructor chỉ cần gọi this.reloadLibrary() (không gọi renderSidebar() ở đây).
+     * 2) reloadLibrary() gọi this.searchLibrary.setBaseData(...).
+     * 3) setBaseData(...) sẽ gọi ngược updateResults(...), và updateResults mới gọi renderSidebar().
+     */
+    async reloadLibrary() {
+        try {
+            const [{ playlists }, artists] = await Promise.all([
+                playlistsData.getUserPlaylists(), // { playlists: [...] }
+                artistsData.getFollowedArtists(), //  artists: [...]
+            ]);
+
+            this.playlistResults = playlists || [];
+            this.artistResults = artists || [];
+
+            // Bơm & đồng bộ data gốc cho Search -> Search sẽ gọi lại updateResults(...)
+            this.searchLibrary.setBaseData(
+                this.playlistResults,
+                this.artistResults
+            );
+
+            // console.log('Playlist: ', playlists);
+            // console.log('Artists: ', artists);
+        } catch (error) {
+            this.playlistResults = [];
+            this.artistResults = [];
+            this.searchLibrary.setBaseData([], []);
+            console.log('Reload Library error:', error);
+        }
+    }
+
+    // ================== CONTEXT MENU FOR PLAYLISTS + ARTISTS ==================
+
+    _initContextMenuDom() {
+        // SideBar wrapper + vùng scroll
+        this.sidebar = this.container;
+        this.sidebarNav = this.container.querySelector('.sidebar-nav');
+        this.libContent = this.sidebarNav.querySelector('.library-content');
+
+        // 2 context menus đã có sẵn trong HTML
+        this.artistMenu = this.sidebarNav.querySelector('.artist-context-menu');
+        this.playlistMenu = this.sidebarNav.querySelector(
+            '.playlist-context-menu'
+        );
+    }
+
+    _bindContextMenuEvents() {
+        // Mở context menu bằng chuột phải trên item
+        this.libContent.addEventListener('contextmenu', (e) => {
+            const item = e.target.closest('.library-item');
+            if (!item) return;
+
+            e.preventDefault();
+            this._hideAllMenus();
+
+            const type = item.dataset.type;
+            const id = item.dataset.id;
+
+            const currentMenu =
+                type === 'artist' ? this.artistMenu : this.playlistMenu;
+
+            // gắn id vào menu để click handler dùng
+            currentMenu.dataset.id = id;
+
+            currentMenu.classList.add('show');
+            this.sidebar.classList.add('locked');
+            this._positionMenu(currentMenu, e);
+        });
+
+        // Click actions – PLAYLIST
+        this.playlistMenu.addEventListener('click', async (e) => {
+            const deleteOpt = e.target.closest('.delete');
+            const removeOpt = e.target.closest('.remove');
+            const editOpt = e.target.closest('.edit');
+
+            const playlistId = this.playlistMenu.dataset.id;
+            if (!playlistId) return;
+
+            try {
+                if (deleteOpt) {
+                    await playlistsData.deleteUserPlaylistById(playlistId);
+                    document.dispatchEvent(
+                        new CustomEvent('playlist:changed', {
+                            detail: { action: 'deleted', playlistId },
+                        })
+                    );
+                    return;
+                }
+
+                if (removeOpt) {
+                    await httpRequest.put(`playlists/${playlistId}`, {
+                        is_public: false,
+                    });
+                    document.dispatchEvent(
+                        new CustomEvent('playlist:changed', {
+                            detail: { action: 'unpublished', playlistId },
+                        })
+                    );
+                    return;
+                }
+
+                if (editOpt) {
+                    const playlist = await playlistsData.getPlaylistById(
+                        playlistId
+                    );
+
+                    if (
+                        playlist &&
+                        typeof this.onOpenPlaylistEditor === 'function'
+                    ) {
+                        this.onOpenPlaylistEditor(playlist);
+                    }
+                    return;
+                }
+            } catch (err) {
+                helpers.showToast(
+                    "Couldn't modify playlist. Please try again.",
+                    'error'
+                );
+                console.log("Couldn't modify playlist. Please try again.");
+            } finally {
+                this._hideAllMenus();
+            }
+        });
+
+        // Click actions – ARTIST
+        this.artistMenu.addEventListener('click', async (e) => {
+            const unfollowOpt = e.target.closest('.unfollow');
+            if (!unfollowOpt) return;
+
+            const artistId = this.artistMenu.dataset.id;
+            if (!artistId) return;
+
+            try {
+                await artistsData.unfollowArtist(artistId);
+                document.dispatchEvent(
+                    new CustomEvent('playlist:changed', {
+                        detail: { action: 'artist-unfollowed', artistId },
+                    })
+                );
+            } catch {
+                helpers.showToast('Error happen. Please try again.', 'error');
+                console.log('Error happen. Please try again.');
+            } finally {
+                this._hideAllMenus();
+            }
+        });
+
+        // Auto close khi click ngoài / Escape
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.menu-context')) this._hideAllMenus();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') this._hideAllMenus();
+        });
+    }
+
+    _hideAllMenus() {
+        this.artistMenu.classList.remove('show');
+        this.playlistMenu.classList.remove('show');
+        this.sidebar.classList.remove('locked');
+    }
+
+    _positionMenu(menu, e) {
+        const navRect = this.sidebarNav.getBoundingClientRect();
+        const scroller = this.sidebar;
+
+        // toạ độ tương đối với nav + bù scroll của sidebar
+        let left = e.clientX - navRect.left + scroller.scrollLeft;
+        let top = e.clientY - navRect.top + scroller.scrollTop;
+
+        // menu đã .show để đo kích thước
+        const menuW = menu.offsetWidth;
+        const menuH = menu.offsetHeight;
+
+        const padding = 8;
+        const minLeft = scroller.scrollLeft + padding;
+        const minTop = scroller.scrollTop + padding;
+        const maxLeft =
+            scroller.scrollLeft + scroller.clientWidth - menuW - padding;
+        const maxTop =
+            scroller.scrollTop + scroller.clientHeight - menuH - padding;
+
+        left = Math.max(minLeft, Math.min(left, maxLeft));
+        top = Math.max(minTop, Math.min(top, maxTop));
+
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
+    }
+
+    // ================== MENU SORT + VIEW ==================
+    _initSortDom() {
+        // Nút & menu sort trong sidebar
+        this.sortBtn = this.container.querySelector('.sort-btn');
+        this.sortMenu = this.container.querySelector('.recent-context-menu');
+        this.sortText = this.container.querySelector('.sort-text');
+        this.sortIcon = this.container.querySelector('.sort-icon'); // icon trên nút
+        this.viewBtns = this.sortMenu.querySelectorAll('.recent-view-btn'); // 4 nút view
+        this.libraryContentEl =
+            this.container.querySelector('.library-content');
+        this.sidebarScroller = this.container; // để set overflowY
+    }
+
+    _bindSortEvents() {
+        // Nút mở/đóng menu
+        this.sortBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.sortMenu.classList.toggle('show');
+            if (this.sortMenu.classList.contains('show')) {
+                this.sidebarScroller.style.overflowY = 'hidden';
+            } else {
+                this.sidebarScroller.style.overflowY = '';
+            }
+        };
+
+        // Chọn option (Sort + View)
+        this.sortMenu.addEventListener('click', (e) => {
+            // ----- Sort by -----
+            const item = e.target.closest('.recent-menu-item');
+            if (item) {
+                this.sortMode = item.dataset.sort;
+                if (this.sortText)
+                    this.sortText.textContent = SORT_TEXT[this.sortMode];
+
+                this._removeActiveSortOptions();
+                item.classList.add('active');
+
+                this.renderSidebar();
+                this._hideSortMenu();
+                return;
+            }
+
+            // ----- View as -----
+            const viewBtn = e.target.closest('.recent-view-btn');
+            if (viewBtn) {
+                this.viewMode = viewBtn.dataset.view;
+
+                // Xoá active các nút view trước khi set lại (yêu cầu)
+                this._removeActiveViewBtns();
+                viewBtn.classList.add('active');
+
+                // Đổi icon trên nút góc trên
+                if (this.sortIcon) {
+                    this.sortIcon.className = `sort-icon fas ${
+                        VIEW_ICON[this.viewMode]
+                    }`;
+                }
+
+                // Render theo view mới + áp CSS
+                this.renderSidebar();
+                this._hideSortMenu();
+                return;
+            }
+        });
+
+        // Auto close khi click ngoài
+        document.addEventListener('click', (e) => {
+            const clickedInsideMenu = this.sortMenu.contains(e.target);
+            const clickedBtn = this.sortBtn.contains(e.target);
+            if (
+                this.sortMenu.classList.contains('show') &&
+                !clickedInsideMenu &&
+                !clickedBtn
+            ) {
+                this._hideSortMenu();
+            }
+        });
+
+        // ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') this._hideSortMenu();
+        });
+    }
+
+    _applySort(playlists, artists, sortMode) {
+        // Artists: giữ nguyên (trừ ALPHABETICAL)
+        switch (sortMode) {
+            case SORT_RECENT:
+                // Sort playlist theo thời gian updated_at (nếu có) hoặc created_at, mới nhất lên trước
+                playlists.sort((a, b) => {
+                    const timeA = new Date(
+                        a.updated_at || a.created_at || 0
+                    ).getTime();
+
+                    const timeB = new Date(
+                        b.updated_at || b.created_at || 0
+                    ).getTime();
+                    return timeB - timeA; // DESC → playlist mới nhất đứng trước
+                });
+                break;
+
+            case SORT_RECENTLY_ADDED:
+                // Sort playlist theo created_at, mới nhất lên trước
+                playlists.sort((a, b) => {
+                    const timeA = new Date(a.created_at || 0).getTime();
+                    const timeB = new Date(b.created_at || 0).getTime();
+                    return timeB - timeA; // DESC
+                });
+                break;
+
+            case SORT_ALPHABETICAL:
+                // Sort playlist & artist theo tên (A-Z)
+                playlists.sort((a, b) =>
+                    (a.name || '').localeCompare(b.name || '')
+                );
+                artists.sort((a, b) =>
+                    (a.name || '').localeCompare(b.name || '')
+                );
+                break;
+
+            case SORT_CREATOR:
+                // Sort playlist theo tên chủ sở hữu (A-Z)
+                playlists.sort((a, b) => {
+                    const ownerA = a.user_display_name || a.user_username || '';
+                    const ownerB = b.user_display_name || b.user_username || '';
+                    return ownerA.localeCompare(ownerB);
+                });
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    /* Xoá active tất cả option sort trong menu trước khi set option mới */
+    _removeActiveSortOptions() {
+        const allOptionsMenu =
+            this.sortMenu.querySelectorAll('.recent-menu-item');
+        allOptionsMenu.forEach((option) => option.classList.remove('active'));
+    }
+
+    /* Xoá active tất cả nút view trước khi set nút mới (yêu cầu) */
+    _removeActiveViewBtns() {
+        this.viewBtns.forEach((btn) => btn.classList.remove('active'));
+    }
+
+    _hideSortMenu() {
+        this.sortMenu.classList.remove('show');
+        this.sidebarScroller.style.overflowY = '';
+    }
+
+    /* Đồng bộ UI view lần đầu: icon + active + layout container */
+    _syncViewUiState() {
+        if (this.sortIcon) {
+            this.sortIcon.className = `sort-icon fas ${
+                VIEW_ICON[this.viewMode]
+            }`;
+        }
+        // set active cho nút view đúng với default
+        this._removeActiveViewBtns();
+        const btn = this.sortMenu.querySelector(
+            `.recent-view-btn[data-view="${this.viewMode}"]`
+        );
+        if (btn) btn.classList.add('active');
+
+        // container layout
+        if (this.libraryContentEl) {
+            this.libraryContentEl.dataset.view = this.viewMode;
+            const isGrid =
+                this.viewMode === VIEW_COMPACT_GRID ||
+                this.viewMode === VIEW_DEFAULT_GRID;
+            this.libraryContentEl.classList.toggle('grid', isGrid);
         }
     }
 }

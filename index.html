@@ -33,440 +33,7 @@
             href="css/responsive.css"
         />
 
-        <style>
-            .main-content {
-                position: relative;
-            }
-
-            /* ===== Overlay (hiển thị/ẩn) ===== */
-            .playlist-form-overlay,
-            .edit-details-modal-overlay {
-                inset: 0;
-                display: none;
-            }
-
-            .playlist-form-overlay.show,
-            .edit-details-modal-overlay.show {
-                display: flex;
-            }
-
-            /* ===== Nút/biểu tượng hover chung ===== */
-            .close-btn:hover,
-            .edit-details-close-btn:hover,
-            .action-icon:hover,
-            .search-close-btn:hover {
-                color: #fff;
-                cursor: pointer;
-            }
-
-            /* ===== Box chọn ảnh – gom class chung cover-image-box ===== */
-            .cover-title {
-                opacity: 0;
-                visibility: hidden;
-                transition: all 0.2s;
-            }
-
-            .cover-image-box {
-                display: flex;
-                flex-direction: column-reverse;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .cover-image-box i {
-                font-size: 48px;
-                transition: all 0.2s;
-            }
-            .cover-image-box i::before {
-                font-family: 'Font Awesome 6 Free';
-                content: '\f001'; /* fa-music */
-            }
-            .cover-image-box:hover i::before {
-                content: '\f304'; /* fa-pen */
-            }
-
-            .cover-image-box:hover * {
-                color: #fff;
-                cursor: pointer;
-            }
-            .cover-image-box:hover .cover-title {
-                opacity: 1;
-                visibility: visible;
-            }
-
-            /* ===== Playlist Create Form ===== */
-            .playlist-form-overlay {
-                position: absolute;
-                z-index: 20;
-                justify-content: center;
-                align-items: flex-start;
-                background: rgba(18, 18, 18, 0.98);
-            }
-
-            .playlist-form-container {
-                position: relative;
-                width: 100%;
-                height: 100%;
-                padding: 48px 30px;
-                display: flex;
-                flex-direction: column;
-                color: #fff;
-                background: linear-gradient(
-                    to bottom,
-                    #535353 0%,
-                    #181818 300px
-                );
-                border-radius: 16px;
-                box-shadow: 0 6px 32px rgba(0, 0, 0, 0.3);
-            }
-
-            .close-btn {
-                position: absolute;
-                z-index: 2;
-                top: 20px;
-                right: 30px;
-                font-size: 2.2rem;
-                color: #b3b3b3;
-                cursor: pointer;
-                transition: color 0.2s;
-            }
-
-            .playlist-header {
-                display: flex;
-                align-items: flex-end;
-                gap: 20px;
-                margin-bottom: 36px;
-                min-height: 168px;
-            }
-
-            .playlist-form-right {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-end;
-                height: 168px;
-            }
-
-            .image-upload-label {
-                cursor: pointer;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-end;
-            }
-
-            .playlist-cover-img {
-                gap: 10px;
-                width: 178px;
-                height: 178px;
-                border-radius: 8px;
-                background: linear-gradient(
-                    to bottom,
-                    #211f1f 0%,
-                    #2a2828 300px
-                );
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            }
-            .playlist-cover-img i {
-                margin-top: 20px;
-                color: #b3b3b3;
-            }
-
-            .playlist-form-left {
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-end;
-                gap: 10px;
-                height: 168px;
-            }
-
-            .playlist-title {
-                font-size: 16px;
-                margin-bottom: 2px;
-                opacity: 0.9;
-            }
-
-            .playlist-heading {
-                font-size: 72px;
-                font-weight: 800;
-                margin: 0 0 10px 0;
-                line-height: 1.1;
-                cursor: pointer;
-            }
-
-            .playlist-username {
-                position: relative;
-                font-size: 14px;
-                font-weight: 700;
-                cursor: pointer;
-            }
-            .playlist-username:hover {
-                text-decoration: underline;
-            }
-            .playlist-username::after {
-                content: '';
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                margin-left: 6px;
-                width: 4px;
-                height: 4px;
-                border-radius: 50%;
-                background: #b3b3b3;
-            }
-
-            .playlist-bottom {
-                margin-top: 80px;
-            }
-
-            .playlist-actions-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0 0 60px 0;
-            }
-            .playlist-actions-left {
-                display: flex;
-                gap: 20px;
-            }
-
-            .playlist-actions-right {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                color: #b3b3b3;
-                font-size: 1rem;
-            }
-
-            .action-icon {
-                font-size: 1.6rem;
-                color: #b3b3b3;
-                cursor: pointer;
-                transition: color 0.2s;
-            }
-
-            .compact-label {
-                font-size: 1.05rem;
-                opacity: 0.87;
-                margin-right: 7px;
-            }
-
-            .playlist-divider {
-                height: 1px;
-                background: #535353;
-            }
-
-            .playlist-search-section {
-                position: relative;
-                margin-top: 10px;
-            }
-            .playlist-search-title {
-                font-size: 24px;
-                font-weight: 700;
-                margin-top: 30px;
-            }
-
-            .playlist-search-box {
-                margin-top: 25px;
-                display: flex;
-                align-items: center;
-                background: #232323;
-                border-radius: 6px;
-                width: 380px;
-                padding: 0 14px;
-            }
-            .playlist-search-input {
-                flex: 1;
-                background: transparent;
-                border: none;
-                color: #fff;
-                font-size: 16px;
-                padding: 12px 0 12px 2px;
-                outline: none;
-            }
-            .playlist-search-box i {
-                font-size: 1.1rem;
-                margin-right: 10px;
-                color: #b3b3b3;
-            }
-
-            .search-close-btn {
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                right: 0;
-                background: none;
-                border: none;
-                color: #b3b3b3;
-                font-size: 2.2rem;
-                cursor: pointer;
-                transition: color 0.2s;
-            }
-
-            /* ===== Edit Playlist Details Modal ===== */
-            .edit-details-modal-overlay {
-                position: fixed;
-                z-index: 99;
-                align-items: center;
-                justify-content: center;
-                background: rgba(0, 0, 0, 0.72);
-            }
-
-            .edit-details-modal {
-                background: #232323;
-                border-radius: 16px;
-                padding: 30px;
-                box-shadow: 0 8px 40px rgba(0, 0, 0, 0.44);
-                min-width: 660px;
-                min-height: 380px;
-                position: relative;
-                display: flex;
-                flex-direction: column;
-                max-width: 600px;
-                width: 100%;
-            }
-
-            .edit-details-close-btn {
-                position: absolute;
-                top: 28px;
-                right: 40px;
-                font-size: 2rem;
-                color: #b3b3b3;
-                background: none;
-                border: none;
-                cursor: pointer;
-                z-index: 1;
-            }
-
-            .edit-details-title {
-                padding: 0 0 30px;
-                font-size: 32px;
-                font-weight: 700;
-                color: #fff;
-                letter-spacing: -1px;
-            }
-
-            .edit-details-body {
-                display: flex;
-                gap: 20px;
-                align-items: stretch;
-                min-height: 202px;
-            }
-
-            .edit-details-cover-label {
-                display: flex;
-                align-items: flex-end;
-                height: 100%;
-            }
-
-            .edit-details-cover-img {
-                width: 202px;
-                height: 202px;
-                background: #191919;
-                border-radius: 4px;
-                color: #b3b3b3;
-                cursor: pointer;
-            }
-            .edit-details-cover-img i {
-                margin-top: 10px;
-            }
-
-            .detail-title {
-                margin-top: 10px;
-                font-size: 20px;
-                transition: all 0.2s;
-            }
-
-            /* icon hover (đã gom chung ở .cover-image-box) */
-
-            .edit-details-fields {
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-end;
-                flex: 1;
-            }
-
-            .edit-details-input {
-                width: 100%;
-                background: #181818;
-                color: #fff;
-                border-radius: 4px;
-                padding: 16px 15px;
-                font-size: 16px;
-            }
-
-            .edit-details-textarea {
-                width: 100%;
-                background: #181818;
-                color: #b3b3b3;
-                border: none;
-                outline: none;
-                border-radius: 4px;
-                padding: 15px 18px;
-                font-family: inherit;
-                font-size: 16px;
-                height: 135px;
-                resize: none;
-                margin-top: auto;
-            }
-
-            .edit-details-footer {
-                margin-top: 10px;
-                display: flex;
-                flex-direction: column;
-                align-items: flex-end;
-                gap: 10px;
-            }
-
-            .edit-details-save-btn {
-                background: #fff;
-                color: #181818;
-                font-weight: 700;
-                font-size: 1.13rem;
-                border: none;
-                border-radius: 999px;
-                padding: 16px 36px;
-                cursor: pointer;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-                transition: background 0.18s, color 0.18s;
-            }
-            .edit-details-save-btn:hover {
-                scale: 1.04;
-                background: #f3f2f2;
-            }
-
-            .edit-details-notice {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-                align-self: flex-start;
-                color: #fff;
-                font-size: 14px;
-                font-weight: 600;
-                opacity: 0.97;
-                text-align: left;
-            }
-
-            .alert-message-wrapper {
-                display: none;
-                align-items: center;
-                justify-content: flex-start;
-                gap: 8px;
-
-                margin-bottom: 16px;
-                padding: 10px 8px;
-                border-radius: 4px;
-                background: #f85858;
-            }
-
-            .alert-message-wrapper.show {
-                display: flex;
-            }
-
-            .alert-message {
-                font-size: 14px;
-            }
-        </style>
+        <style></style>
     </head>
 
     <body>
@@ -483,23 +50,30 @@
                 <nav class="sidebar-nav">
                     <div class="nav-section">
                         <h2 class="section-title">Your Library</h2>
-                        <button class="create-btn">
+                        <button
+                            class="create-btn"
+                            data-tooltip="Create a playlist, folder or Jam"
+                        >
                             <i class="fas fa-plus"></i>
                             Create
                         </button>
                     </div>
 
+                    <!-- Filter Btns -->
                     <div class="nav-tabs">
-                        <!-- <button class="close-filter-btn">
+                        <button class="close-filter-btn">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                         <button class="nav-tab active">Playlists</button>
-                        <button class="nav-tab">Artists</button> -->
+                        <button class="nav-tab">Artists</button>
                     </div>
 
                     <div class="search-library">
                         <!-- Real search btn -->
-                        <button class="search-library-btn">
+                        <button
+                            class="search-library-btn"
+                            data-tooltip="Search in Your Library"
+                        >
                             <i class="fas fa-search"></i>
                         </button>
 
@@ -523,52 +97,118 @@
                     <!-- Recent Context Menu -->
                     <ul class="recent-context-menu">
                         <li class="recent-menu-title">Sort by</li>
-                        <li>
-                            <button class="recent-menu-item active">
-                                <span>Recent</span>
-                                <i class="fas fa-check recent-menu-check"></i>
-                            </button>
+                        <li
+                            class="recent-menu-item recent active"
+                            data-sort="recent"
+                        >
+                            <span>Recent</span>
+                            <i class="fas fa-check recent-menu-check"></i>
                         </li>
-                        <li>
-                            <button class="recent-menu-item">
-                                <span>Recently Added</span>
-                                <i class="fas fa-check recent-menu-check"></i>
-                            </button>
+                        <li
+                            class="recent-menu-item recently-add"
+                            data-sort="recently-added"
+                        >
+                            <span>Recently Added</span>
+                            <i class="fas fa-check recent-menu-check"></i>
                         </li>
-                        <li>
-                            <button class="recent-menu-item">
-                                <span>Alphabetical</span>
-                                <i class="fas fa-check recent-menu-check"></i>
-                            </button>
+                        <li
+                            class="recent-menu-item alphabetical"
+                            data-sort="alphabetical"
+                        >
+                            <span>Alphabetical</span>
+                            <i class="fas fa-check recent-menu-check"></i>
                         </li>
-                        <li>
-                            <button class="recent-menu-item">
-                                <span>Creator</span>
-                                <i class="fas fa-check recent-menu-check"></i>
-                            </button>
+                        <li
+                            class="recent-menu-item creator"
+                            data-sort="creator"
+                        >
+                            <span>Creator</span>
+                            <i class="fas fa-check recent-menu-check"></i>
                         </li>
                         <li class="recent-divider"></li>
                         <li class="recent-divider"></li>
 
                         <li class="recent-menu-title">View as</li>
                         <li class="recent-view-as-row">
-                            <button class="recent-view-btn">
+                            <button
+                                class="recent-view-btn"
+                                data-view="compact-list"
+                                data-tooltip="Compact list"
+                            >
                                 <i class="fas fa-bars"></i>
                             </button>
-                            <button class="recent-view-btn">
+                            <button
+                                class="recent-view-btn"
+                                data-view="default-list"
+                                data-tooltip="Default list"
+                            >
                                 <i class="fas fa-list"></i>
                             </button>
-                            <button class="recent-view-btn active">
+                            <button
+                                class="recent-view-btn active"
+                                data-view="compact-grid"
+                                data-tooltip="Compact grid"
+                            >
                                 <i class="fas fa-th"></i>
                             </button>
-                            <button class="recent-view-btn">
+                            <button
+                                class="recent-view-btn"
+                                data-view="default-grid"
+                                data-tooltip="Default grid"
+                            >
                                 <i class="fas fa-th-large"></i>
                             </button>
                         </li>
                     </ul>
 
+                    <!-- Artist Context Menu -->
+                    <ul class="artist-context-menu menu-context">
+                        <li
+                            class="menu-item unfollow"
+                            id="unfollow"
+                        >
+                            <i class="unfollow-icon fas fa-times"></i>
+                            <span>Unfollow</span>
+                        </li>
+                        <li class="menu-item">
+                            <i class="fas fa-ban"></i>
+                            <span> Don't play this artist</span>
+                        </li>
+                        <li class="menu-item">
+                            <i class="fas fa-thumbtack"></i>
+                            <span>Pin artist</span>
+                        </li>
+
+                        <li class="divider"></li>
+                        <li class="menu-item">
+                            <i class="fas fa-desktop"></i>
+                            <span>Open in Desktop app</span>
+                        </li>
+                    </ul>
+
+                    <!-- Playlist Context Menu -->
+                    <ul class="playlist-context-menu menu-context">
+                        <li class="menu-item remove">
+                            <i class="fas fa-user-circle menu-icon"></i>
+                            <span>Remove from profile</span>
+                        </li>
+                        <li class="menu-item delete">
+                            <i
+                                class="fas fa-minus-circle menu-icon delete-icon"
+                            ></i>
+                            <span>Delete</span>
+                        </li>
+
+                        <li class="divider"></li>
+                        <li class="menu-item edit">
+                            <i class="fas fa-pen menu-icon"></i>
+                            <span>Edit details</span>
+                        </li>
+                    </ul>
+
                     <!-- Library Content -->
                     <div class="library-content">
+                        <!-- Default list -->
                         <div class="library-item active">
                             <div class="item-icon liked-songs">
                                 <i class="fas fa-heart"></i>
@@ -593,42 +233,6 @@
                                 <div class="item-subtitle">Playlist • Han</div>
                             </div>
                         </div>
-
-                        <div class="library-item">
-                            <img
-                                src="placeholder.svg?height=48&width=48"
-                                alt="Đen"
-                                class="item-image"
-                            />
-                            <div class="item-info">
-                                <div class="item-title">Đen</div>
-                                <div class="item-subtitle">Artist</div>
-                            </div>
-                        </div>
-
-                        <div class="library-item">
-                            <img
-                                src="placeholder.svg?height=48&width=48"
-                                alt="Trúc Nhân"
-                                class="item-image"
-                            />
-                            <div class="item-info">
-                                <div class="item-title">Trúc Nhân</div>
-                                <div class="item-subtitle">Artist</div>
-                            </div>
-                        </div>
-
-                        <div class="library-item">
-                            <img
-                                src="placeholder.svg?height=48&width=48"
-                                alt="Thùy Chi"
-                                class="item-image"
-                            />
-                            <div class="item-info">
-                                <div class="item-title">Thùy Chi</div>
-                                <div class="item-subtitle">Artist</div>
-                            </div>
-                        </div>
                     </div>
                 </nav>
             </aside>
@@ -639,7 +243,10 @@
                 <header class="main-header">
                     <div class="search-container">
                         <div class="search-box">
-                            <button class="home-btn">
+                            <button
+                                class="home-btn"
+                                data-tooltip="Home"
+                            >
                                 <i class="fas fa-home"></i>
                             </button>
                             <div class="search-input-wrapper">
@@ -659,7 +266,10 @@
                             <button class="auth-btn login-btn">Log in</button>
                         </div>
 
-                        <div class="user-menu">
+                        <div
+                            class="user-menu"
+                            data-tooltip="Username"
+                        >
                             <div class="user-info">
                                 <button
                                     class="user-avatar"
@@ -670,6 +280,14 @@
                                         class="user-name"
                                     ></span>
                                 </button>
+
+                                <input
+                                    type="file"
+                                    id="user-cover-input"
+                                    class="user-cover-input"
+                                    accept="image/*"
+                                    hidden
+                                />
                             </div>
 
                             <!-- User Dropdown Menu -->
@@ -678,65 +296,17 @@
                                 id="userDropdown"
                             >
                                 <li>
-                                    <a
-                                        href="#"
+                                    <button
                                         class="dropdown-item"
+                                        id="change-avatar"
                                     >
-                                        <span>Account</span>
+                                        <span>Change Avatar</span>
                                         <i
                                             class="fas fa-up-right-from-square dropdown-external"
                                         ></i>
-                                    </a>
+                                    </button>
                                 </li>
-                                <li>
-                                    <a
-                                        href="#"
-                                        class="dropdown-item"
-                                    >
-                                        <span>Profile</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="#"
-                                        class="dropdown-item"
-                                    >
-                                        <span>Upgrade to Premium</span>
-                                        <i
-                                            class="fas fa-up-right-from-square dropdown-external"
-                                        ></i>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="#"
-                                        class="dropdown-item"
-                                    >
-                                        <span>Support</span>
-                                        <i
-                                            class="fas fa-up-right-from-square dropdown-external"
-                                        ></i>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="#"
-                                        class="dropdown-item"
-                                    >
-                                        <span>Download</span>
-                                        <i
-                                            class="fas fa-up-right-from-square dropdown-external"
-                                        ></i>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="#"
-                                        class="dropdown-item"
-                                    >
-                                        <span>Settings</span>
-                                    </a>
-                                </li>
+
                                 <li class="dropdown-divider"></li>
                                 <li>
                                     <button
@@ -1006,7 +576,10 @@
                             class="artist-controls"
                             id="artist-controls"
                         >
-                            <button class="play-btn-large toggle-play-btn">
+                            <button
+                                class="play-btn-large toggle-play-btn"
+                                data-tooltip="Play"
+                            >
                                 <i class="play-icon fas fa-play"></i>
                             </button>
 
@@ -1179,32 +752,52 @@
                         alt="Current track"
                         class="player-image"
                     />
+
                     <div class="player-info">
                         <div class="player-title">
                             Yêu Một Người Sao Buồn Đến Thế
                         </div>
                         <div class="player-artist">Noo Phước Thịnh</div>
                     </div>
-                    <button class="add-btn">
+
+                    <button
+                        class="add-btn"
+                        data-tooltip="Add to Liked Songs"
+                    >
                         <i class="fa-solid fa-plus"></i>
                     </button>
                 </div>
 
                 <div class="player-center">
                     <div class="player-controls">
-                        <button class="control-btn random-btn">
+                        <button
+                            class="control-btn random-btn"
+                            data-tooltip="Enable shuffle"
+                        >
                             <i class="fas fa-random"></i>
                         </button>
-                        <button class="control-btn previous-btn">
+                        <button
+                            class="control-btn previous-btn"
+                            data-tooltip="Previous"
+                        >
                             <i class="fas fa-step-backward"></i>
                         </button>
-                        <button class="control-btn play-btn toggle-play-btn">
+                        <button
+                            class="control-btn play-btn toggle-play-btn"
+                            data-tooltip="Play"
+                        >
                             <i class="play-icon fas fa-play"></i>
                         </button>
-                        <button class="control-btn next-btn">
+                        <button
+                            class="control-btn next-btn"
+                            data-tooltip="Next"
+                        >
                             <i class="fas fa-step-forward"></i>
                         </button>
-                        <button class="control-btn loop-btn">
+                        <button
+                            class="control-btn loop-btn"
+                            data-tooltip="Enable repeat"
+                        >
                             <i class="fas fa-redo"></i>
                         </button>
                     </div>
@@ -1226,7 +819,10 @@
                         <i class="fas fa-microphone"></i>
                     </button>
                     <div class="volume-container">
-                        <button class="control-btn volume-icon">
+                        <button
+                            class="control-btn volume-icon"
+                            data-tooltip="Mute"
+                        >
                             <i class="fas fa-volume-down"></i>
                         </button>
                         <div class="volume-bar">
@@ -1240,7 +836,10 @@
                             ></div>
                         </div>
                     </div>
-                    <button class="control-btn">
+                    <button
+                        class="control-btn"
+                        data-tooltip="Enter full screen"
+                    >
                         <i class="fas fa-expand"></i>
                     </button>
                 </div>
@@ -1269,7 +868,6 @@
                     <div
                         class="auth-form"
                         id="signupForm"
-                        style="display: none"
                     >
                         <h1 class="modal-heading">
                             Sign up to start listening
@@ -1280,6 +878,19 @@
                         </div>
 
                         <form class="auth-form-content">
+                            <div class="form-group">
+                                <input
+                                    type="text"
+                                    placeholder="Username"
+                                    class="form-input"
+                                    id="signupUsername"
+                                />
+                                <div class="error-message">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Please enter a valid username</span>
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 <input
                                     type="email"
@@ -1345,6 +956,7 @@
                     <div
                         class="auth-form"
                         id="loginForm"
+                        style="display: none"
                     >
                         <h1 class="modal-heading">Log in to Spotify</h1>
                         <div class="auth-error">

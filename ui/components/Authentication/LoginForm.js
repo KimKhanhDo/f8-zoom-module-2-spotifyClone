@@ -2,11 +2,11 @@ import { httpRequest } from '../../../utils/index.js';
 import * as authHelpers from './index.js';
 
 export class LoginForm {
-    constructor({ loginForm, authModal, authBtns, updateCurrentUserAvatar }) {
+    constructor({ loginForm, authModal, authBtns, setUserAvatarInitial }) {
         this.loginForm = loginForm;
         this.authModal = authModal;
         this.authBtns = authBtns;
-        this.updateCurrentUserAvatar = updateCurrentUserAvatar;
+        this.setUserAvatarInitial = setUserAvatarInitial;
 
         this.userInfo = document.querySelector('.user-info');
         this.authFormContent = loginForm.querySelector('.auth-form-content');
@@ -77,7 +77,7 @@ export class LoginForm {
             localStorage.setItem('accessToken', access_token);
             authHelpers.handleAfterAuthSuccess({
                 user,
-                updateCurrentUserAvatar: this.updateCurrentUserAvatar,
+                setUserAvatarInitial: this.setUserAvatarInitial,
                 toastMsg: 'Login Successfully',
                 authModal: this.authModal,
                 authBtns: this.authBtns,

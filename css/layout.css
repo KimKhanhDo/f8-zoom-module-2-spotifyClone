@@ -69,6 +69,7 @@
 
 /* Main Content */
 .main-content {
+    position: relative;
     grid-area: main;
     background: linear-gradient(
         to bottom,

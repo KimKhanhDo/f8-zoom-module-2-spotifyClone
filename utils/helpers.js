@@ -26,3 +26,39 @@ export function formatCount(count) {
     if (typeof count !== 'number') return '0';
     return count.toLocaleString('en-US');
 }
+
+// Show toast message
+export function showToast(message, type = 'success') {
+    const toastContainer = document.querySelector('#toast-container');
+    const icons = {
+        success: 'fa-solid fa-circle-check',
+        updated: 'fa-solid fa-bullhorn',
+        error: 'fa-solid fa-circle-exclamation',
+    };
+    const icon = icons[type];
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.style.animation = `slideIn 0.3s ease-out, fadeOut 0.6s ease-in 6s forwards`;
+
+    toast.innerHTML = `
+            <span class="toast-icon"><i class="${icon}"></i></span>
+            <div class="toast-message">${message}</div>
+            <button class="toast-close">&times;</button>
+        `;
+
+    const autoDismissId = setTimeout(() => {
+        toast.remove();
+    }, 7000);
+
+    toast.querySelector('.toast-close').onclick = () => {
+        toast.remove();
+        clearTimeout(autoDismissId);
+    };
+
+    toastContainer.appendChild(toast);
+}
+
+export function extractUserName(email) {
+    return email.charAt(0).toUpperCase();
+}

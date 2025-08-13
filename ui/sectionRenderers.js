@@ -1,7 +1,6 @@
 import { artistsData, playerData, playlistsData } from '../data/index.js';
-import { httpRequest } from '../utils/index.js';
+import { httpRequest, helpers } from '../utils/index.js';
 import { handleTrackSelect } from '../main.js';
-import { showToast } from './components/Authentication/index.js';
 
 import {
     PopularArtistsComponent,
@@ -11,6 +10,7 @@ import {
     PlayerControllerComponent,
     MiniPlayerInfoComponent,
     SidebarComponent,
+    CreatePlaylistComponent,
 } from './components/index.js';
 
 // Biến lưu instance từng component
@@ -19,6 +19,7 @@ let artistHeroComponent = null;
 let miniPlayerComponent = null;
 let popularTracksComponent = null;
 let sidebarComponent = null;
+let playlistUI = null;
 
 export function getPlayerControllerInstance(onTrackChange) {
     if (!playerController) {
@@ -43,11 +44,18 @@ export function getPlayerControllerInstance(onTrackChange) {
 }
 
 // ========== RENDER OTHER SECTIONS ==========
-export function renderSidebarLeftSection() {
+
+export async function renderSidebarLeftSection() {
     const sidebarContainer = document.querySelector('.sidebar');
 
+    if (!playlistUI) {
+        playlistUI = new CreatePlaylistComponent();
+    }
+
     if (!sidebarComponent) {
-        sidebarComponent = new SidebarComponent(sidebarContainer);
+        sidebarComponent = new SidebarComponent(sidebarContainer, (playlist) =>
+            playlistUI.openEditFor(playlist)
+        );
     }
 
     sidebarComponent.renderSidebar();
@@ -98,6 +106,7 @@ function updateUIWithInfoAndTracks(info, tracks, type) {
         // alert('Không có bài hát!');
         playerData.setTracks([]);
         renderArtistHeroSection(info);
+        updateFollowBtnState({ cardInfo: info, type });
         renderPopularTracksSection([], handleTrackSelect);
         renderMiniPlayerSection(null);
         return;
@@ -146,13 +155,30 @@ function updateFollowBtnState({ cardInfo, type }) {
 
     followBtn.onclick = async () => {
         followBtn.disabled = true;
+
         try {
             if (!isFollowing) {
                 await httpRequest.post(path);
-                isFollowing = true; // Chỉ đổi khi API thành công
+                isFollowing = true;
+
+                document.dispatchEvent(
+                    new CustomEvent('playlist:changed', {
+                        detail: {
+                            action: 'followed',
+                        },
+                    })
+                );
             } else {
                 await httpRequest.del(path);
                 isFollowing = false;
+
+                document.dispatchEvent(
+                    new CustomEvent('playlist:changed', {
+                        detail: {
+                            action: 'unfollowed',
+                        },
+                    })
+                );
             }
 
             // Chỉ đổi label sau khi API thành công
@@ -160,7 +186,10 @@ function updateFollowBtnState({ cardInfo, type }) {
         } catch (error) {
             // Không đổi trạng thái/label nếu lỗi
             console.log('Follow/Unfollow Error:', error);
-            showToast('Something went wrong. Please try again.', 'error');
+            helpers.showToast(
+                'Something went wrong. Please try again.',
+                'error'
+            );
         } finally {
             followBtn.disabled = false;
         }
@@ -186,24 +215,22 @@ function getScrollbarWidth() {
 // ========== BIGGEST HITS ACTION ==========
 // callback truyền vào BiggestHitsComponent
 async function handleHitCardClick(playlistId) {
+    if (!playlistId || playlistId === 'undefined') return;
+
+    let playlistInfo = {};
+    let tracks = [];
+
     try {
-        if (!playlistId || playlistId === 'undefined') return;
-        // const albumInfo = await albumsData.getAlbumById(playlistId);
-        // const { tracks } = await albumsData.getAlbumTracks(playlistId);
+        playlistInfo = await playlistsData.getPlaylistById(playlistId);
+        tracks = await playlistsData.getPlaylistTracks(playlistId);
 
-        const playlistInfo = await playlistsData.getPlaylistById(playlistId);
-        // console.log('Playlist Info:', playlistInfo);
-
-        const tracks = await playlistsData.getPlaylistTracks(playlistId);
+        console.log('Playlist Info:', playlistInfo);
         // console.log('Playlist Tracks:', tracks);
-
-        toggleDetailPanel(true);
-        updateUIWithInfoAndTracks(playlistInfo, tracks, 'playlist');
     } catch (error) {
         console.error('Error in handleHitCardClick:', error);
+    } finally {
         toggleDetailPanel(true);
-        // Update UI với info rỗng và tracks rỗng
-        updateUIWithInfoAndTracks({}, [], 'playlist');
+        updateUIWithInfoAndTracks(playlistInfo, tracks, 'playlist');
     }
 }
 
@@ -239,19 +266,20 @@ export async function renderPopularArtistsSection() {
 
 // callback truyền vào ArtistsComponent
 async function handleArtistCardClick(playlistId) {
+    if (!playlistId || playlistId === 'undefined') return;
+    let artistInfo = {};
+    let tracks = [];
+
     try {
-        if (!playlistId || playlistId === 'undefined') return;
-        const artistInfo = await artistsData.getArtistById(playlistId);
+        artistInfo = await artistsData.getArtistById(playlistId);
+        const res = await artistsData.getArtistTracks(playlistId); // res là OBJECT
+        tracks = Array.isArray(res?.tracks) ? res.tracks : []; // ép về mảng
+
         // console.log('Artist Info: ', artistInfo);
-
-        const { tracks } = await artistsData.getArtistTracks(playlistId);
-
-        toggleDetailPanel(true);
-        updateUIWithInfoAndTracks(artistInfo, tracks, 'artist');
     } catch (error) {
         console.error('Error in handleHitCardClick:', error);
+    } finally {
         toggleDetailPanel(true);
-        // Update UI với info rỗng và tracks rỗng
-        updateUIWithInfoAndTracks({}, [], 'artist');
+        updateUIWithInfoAndTracks(artistInfo, tracks, 'artist');
     }
 }

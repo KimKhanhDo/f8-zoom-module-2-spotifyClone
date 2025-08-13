@@ -30,7 +30,9 @@ export class BiggestHitsComponent {
                                     item.name
                                 )}</h3>
                                 <p class="hit-card-artist">${helpers.escapeHTML(
-                                    item.user_display_name || item.user_username
+                                    (item.user_display_name ||
+                                        item.user_username) ??
+                                        'Unknown'
                                 )}</p>
                             </div>
                         </div>

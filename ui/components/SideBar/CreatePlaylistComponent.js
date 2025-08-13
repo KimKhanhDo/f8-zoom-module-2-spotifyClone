@@ -1,5 +1,6 @@
 // ui/components/SideBar/CreatePlaylistComponent.js
 import { httpRequest } from '../../../utils/index.js';
+import { helpers } from '../../../utils/index.js';
 
 export class CreatePlaylistComponent {
     constructor() {
@@ -11,7 +12,7 @@ export class CreatePlaylistComponent {
 
         // DOM
         this._initSidebarElements();
-        this._initOverlayElements();
+        this._initPlaylistFormElements();
         this._initModalElements();
 
         this._bindEvents();
@@ -23,7 +24,7 @@ export class CreatePlaylistComponent {
         this.logoBtn = document.querySelector('.logo');
     }
 
-    _initOverlayElements() {
+    _initPlaylistFormElements() {
         this.playlistFormOverlay = document.querySelector(
             '.playlist-form-overlay'
         );
@@ -64,16 +65,16 @@ export class CreatePlaylistComponent {
 
     /* =================== Events =================== */
     _bindEvents() {
-        this.logoBtn.onclick = () =>
+        this.playlistCloseBtn.onclick = () => {
             this.playlistFormOverlay.classList.remove('show');
+            this._resetPlaylistForm();
+        };
 
-        this.playlistCloseBtn.onclick = () =>
-            this.playlistFormOverlay.classList.remove('show');
+        this.createBtn.onclick = () => this._showCreatePlaylistPanel();
 
-        this.createBtn.onclick = () => this._openCreatePlaylistOverlay();
-
-        // click ảnh bìa ở overlay → mở modal
+        // click ảnh cover ở playlist panel → mở modal edit detail
         this.playlistCoverPickerBox.onclick = () => this._openEditModal();
+
         this.playlistHeading.onclick = () => {
             this._openEditModal();
             // UX: highlight Name
@@ -110,28 +111,35 @@ export class CreatePlaylistComponent {
     }
 
     /* =================== Flow =================== */
-    async _openCreatePlaylistOverlay() {
+    async _showCreatePlaylistPanel() {
         this.playlistFormOverlay.classList.add('show');
-        this._clearError();
+        // luôn reset playlist form mỗi lần tạo mới
+        this._resetPlaylistForm();
 
         try {
             const { playlist } = await httpRequest.post('playlists', {
                 name: 'My Playlist',
+                is_public: 1,
             });
-            if (!playlist) return;
 
             this.currentPlaylist = playlist;
 
-            // Header form: tên playlist + tên user (giữ nguyên logic)
+            // Header form: tên playlist + tên user
             const localInfo = localStorage.getItem('currentUser');
             const user = localInfo ? JSON.parse(localInfo) : {};
 
             this.playlistHeading.textContent = playlist.name;
             this.playlistUsername.textContent =
                 (user.display_name || user.userName) ?? 'Me';
+
+            // Sau khi TẠO playlist thành công:
+            this._notifyPlaylistChange('created');
         } catch (err) {
-            console.log('Playlist Error:', err);
-            // This step don't need to use _showError, this's used for modal detail
+            console.log('Playlist Created Error:', err);
+            helpers.showToast(
+                "Couldn't create playlist. Please try again.",
+                'error'
+            );
         }
     }
 
@@ -142,14 +150,14 @@ export class CreatePlaylistComponent {
         this.selectedFile = null;
         this.uploadedImageUrl = null;
 
-        // hiển thị ảnh hiện có
+        // hiển thị ảnh trước đó đã upload nếu có
         const coverUrl = this.currentPlaylist?.image_url || null;
         if (coverUrl) {
             this._setCoverBackground(this.editCoverBox, coverUrl);
-            this._hideCoverOverlay(this.editCoverBox);
+            this._hideCoverPlaceholder(this.editCoverBox);
         } else {
             this._clearCoverBackground(this.editCoverBox);
-            this._showCoverOverlay(this.editCoverBox);
+            this._showCoverPlaceholder(this.editCoverBox);
         }
 
         this._clearError();
@@ -168,13 +176,11 @@ export class CreatePlaylistComponent {
 
         // preview trong modal
         this._setCoverBackground(this.editCoverBox, this.previewObjectUrl);
-        this._hideCoverOverlay(this.editCoverBox);
+        this._hideCoverPlaceholder(this.editCoverBox);
     }
 
     async _saveEditDetails() {
         if (!this.currentPlaylist?.id) return;
-
-        this._clearError();
 
         const newName =
             (this.editNameInput.value || '').trim() ||
@@ -232,11 +238,13 @@ export class CreatePlaylistComponent {
                     this.playlistCoverPickerBox,
                     this.currentPlaylist.image_url
                 );
-                this._hideCoverOverlay(this.playlistCoverPickerBox);
+                this._hideCoverPlaceholder(this.playlistCoverPickerBox);
             }
 
-            // Đóng modal & dọn state tạm
-            this._clearError();
+            // Sau khi CẬP NHẬT playlist thành công:
+            this._notifyPlaylistChange('updated');
+
+            // Đóng modal & reset state
             this._closeAndResetEditModalPreview();
         } catch (err) {
             console.log('Chi tiết playlist lỗi:', err);
@@ -245,6 +253,12 @@ export class CreatePlaylistComponent {
                 err?.message || 'Error happened. Please try again!'
             );
         }
+    }
+
+    //  Cho phép mở modal edit từ bên ngoài
+    openEditFor(playlist) {
+        this.currentPlaylist = playlist;
+        this._openEditModal();
     }
 
     /* =================== Helpers =================== */
@@ -257,8 +271,24 @@ export class CreatePlaylistComponent {
         this.editDescTextarea.value = this.currentPlaylist?.description ?? '';
     }
 
+    _resetPlaylistForm() {
+        this.selectedFile = null;
+        this.uploadedImageUrl = null;
+        if (this.previewObjectUrl) {
+            URL.revokeObjectURL(this.previewObjectUrl);
+            this.previewObjectUrl = null;
+        }
+        // để lần sau chọn cùng 1 file vẫn bật 'change'
+        this.editCoverInput.value = '';
+
+        // xoá cover ở overlay (form create)
+        this._clearCoverBackground(this.playlistCoverPickerBox);
+        this._showCoverPlaceholder(this.playlistCoverPickerBox);
+    }
+
     _closeAndResetEditModalPreview() {
         this.editDetailsOverlay.classList.remove('show');
+        this._clearError();
 
         this.selectedFile = null;
         this.uploadedImageUrl = null;
@@ -269,7 +299,7 @@ export class CreatePlaylistComponent {
         }
 
         this._clearCoverBackground(this.editCoverBox);
-        this._showCoverOverlay(this.editCoverBox);
+        this._showCoverPlaceholder(this.editCoverBox);
     }
 
     _clearError() {
@@ -287,19 +317,30 @@ export class CreatePlaylistComponent {
         boxEl.style.backgroundSize = 'cover';
         boxEl.style.backgroundPosition = 'center';
     }
+
     _clearCoverBackground(boxEl) {
         boxEl.style.backgroundImage = '';
     }
-    _hideCoverOverlay(boxEl) {
+
+    _hideCoverPlaceholder(boxEl) {
         const icon = boxEl.querySelector('i');
         const title = boxEl.querySelector('.cover-title');
         if (icon) icon.style.display = 'none';
         if (title) title.style.display = 'none';
     }
-    _showCoverOverlay(boxEl) {
+
+    _showCoverPlaceholder(boxEl) {
         const icon = boxEl.querySelector('i');
         const title = boxEl.querySelector('.cover-title');
         if (icon) icon.style.display = '';
         if (title) title.style.display = '';
+    }
+
+    _notifyPlaylistChange(action) {
+        document.dispatchEvent(
+            new CustomEvent('playlist:changed', {
+                detail: { action, playlist: this.currentPlaylist },
+            })
+        );
     }
 }

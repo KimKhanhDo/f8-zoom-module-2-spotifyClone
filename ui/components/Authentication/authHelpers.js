@@ -1,3 +1,5 @@
+import { helpers } from '../../../utils/index.js';
+
 export function togglePasswordVisibility({
     isShowPassword,
     passwordInput,
@@ -18,48 +20,21 @@ export function togglePasswordVisibility({
     return newShowState; // Trả về trạng thái mới
 }
 
-// Show toast message
-export function showToast(message, type = 'success') {
-    const toastContainer = document.querySelector('#toast-container');
-    const icons = {
-        success: 'fa-solid fa-circle-check',
-        updated: 'fa-solid fa-bullhorn',
-        error: 'fa-solid fa-circle-exclamation',
-    };
-    const icon = icons[type];
-
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.style.animation = `slideIn 0.3s ease-out, fadeOut 0.6s ease-in 6s forwards`;
-
-    toast.innerHTML = `
-            <span class="toast-icon"><i class="${icon}"></i></span>
-            <div class="toast-message">${message}</div>
-            <button class="toast-close">&times;</button>
-        `;
-
-    const autoDismissId = setTimeout(() => {
-        toast.remove();
-    }, 7000);
-
-    toast.querySelector('.toast-close').onclick = () => {
-        toast.remove();
-        clearTimeout(autoDismissId);
-    };
-
-    toastContainer.appendChild(toast);
+export function isValidatedUsername(username) {
+    const regex = new RegExp('^[A-Za-z][A-Za-z0-9]{4,19}$');
+    return regex.test(username.trim());
 }
 
 export function isValidatedEmail(email) {
     const regex = new RegExp('^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,}$');
-    return regex.test(email);
+    return regex.test(email.trim());
 }
 
 export function isValidatedPassword(password) {
     const regex = new RegExp(
         '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{6,}$'
     );
-    return regex.test(password);
+    return regex.test(password.trim());
 }
 
 function extractBackendErrorMsg(error) {
@@ -91,15 +66,15 @@ export function hideBackendError(formElement) {
 
 export function handleAfterAuthSuccess({
     user,
-    updateCurrentUserAvatar,
+    setUserAvatarInitial,
     toastMsg,
     authModal,
     authBtns,
     userInfo,
     authFormContent,
 }) {
-    updateCurrentUserAvatar(user);
-    showToast(toastMsg);
+    setUserAvatarInitial(user);
+    helpers.showToast(toastMsg);
     authModal.classList.remove('show');
     authBtns.classList.remove('show');
     userInfo.classList.add('show');
