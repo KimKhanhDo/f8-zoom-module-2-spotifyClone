@@ -2264,36 +2264,3 @@
 }
 
 /* ===== Tooltip bubble ===== */
-.app-tooltip {
-    position: fixed;
-    z-index: 9999;
-    background: #2b2b2b;
-    color: #fff;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    line-height: 1;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transform: translate(-50%, 0) scale(0.98);
-    transition: opacity 0.12s ease, transform 0.12s ease;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-}
-.app-tooltip::after {
-    content: '';
-    position: absolute;
-    left: var(--arrow-left, 50%); /* <- dùng biến, mặc định 50% */
-    bottom: -6px;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: #2b2b2b; /* mũi tên */
-}
-
-/* khi không đủ chỗ phía trên -> đặt tooltip xuống dưới và đảo mũi tên */
-/* Khi thiếu chỗ phía trên -> đặt tooltip DƯỚI và đảo mũi tên */
-.app-tooltip.bottom,
-.app-tooltip.show {
-    opacity: 1;
-    transform: translate(-50%, 0) scale(1);
-}

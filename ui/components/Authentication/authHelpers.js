@@ -17,7 +17,7 @@ export function togglePasswordVisibility({
         eyeIcon.classList.add('fa-eye-slash');
         eyeIcon.style.color = '#b3b3b3';
     }
-    return newShowState; // Trả về trạng thái mới
+    return newShowState;
 }
 
 export function isValidatedUsername(username) {

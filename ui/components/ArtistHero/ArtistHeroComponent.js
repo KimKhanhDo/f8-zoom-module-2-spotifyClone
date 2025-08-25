@@ -1,16 +1,28 @@
 import { helpers } from '../../../utils/index.js';
+import { artistsData } from '../../../data/index.js';
 
 export class ArtistHeroComponent {
     constructor(container) {
         this.container = container; // section .artist-hero
     }
 
-    render(data) {
-        // Set default nếu không có data
+    async render(data) {
+        const isTrackPayload = !('is_verified' in data) && 'artist_id' in data;
+        const view = isTrackPayload
+            ? { ...data, ...(await artistsData.getArtistById(data.artist_id)) }
+            : data;
 
-        let artistName = data.name || 'Unknown Artist';
-        let coverImage = data.image_url || 'placeholder.svg';
-        let isVerified = data.is_verified;
+        // Set default nếu không có data
+        const artistName = (view.name || view.artist_name) ?? 'Unknown Artist';
+        const coverImage =
+            (view.image_url || view.album_cover_image_url) ?? 'placeholder.svg';
+        const isVerified = view.is_verified;
+        const monthlyListener =
+            'monthly_listeners' in view
+                ? `${helpers.formatCount(
+                      view.monthly_listeners
+                  )} monthly listeners`
+                : `${helpers.formatCount(view.followers_count ?? 0)} followers`;
 
         // Tạo HTML string (template)
         this.container.innerHTML = `
@@ -35,15 +47,7 @@ export class ArtistHeroComponent {
                 }
                 <h1 class="artist-name">${helpers.escapeHTML(artistName)}</h1>
                 <p class="monthly-listeners">
-                    ${
-                        'monthly_listeners' in data
-                            ? `${helpers.formatCount(
-                                  data.monthly_listeners
-                              )} monthly listeners`
-                            : `${helpers.formatCount(
-                                  data.followers_count ?? 0
-                              )} followers`
-                    } 
+                    ${monthlyListener} 
                 </p>
             </div>
         `;

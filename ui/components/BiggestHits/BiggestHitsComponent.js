@@ -10,16 +10,23 @@ export class BiggestHitsComponent {
     render() {
         const hitCards = this.biggestHits
             .map((item) => {
+                const id = helpers.escapeHTML(item.id);
+                const image = item.image_url
+                    ? helpers.escapeHTML(item.image_url)
+                    : 'placeholder.svg?height=160&width=160';
+                const title = (item.name || item.title) ?? 'Unknown Album';
+                const name =
+                    (item.user_display_name ||
+                        item.user_username ||
+                        item.artist_name) ??
+                    'Unknown';
+
                 return `
-            <div class="hit-card" data-id=${helpers.escapeHTML(item.id)}>
+            <div class="hit-card" data-id=${id}>
                             <div class="hit-card-cover">
                                 <img
-                                    src=${
-                                        item.image_url
-                                            ? helpers.escapeHTML(item.image_url)
-                                            : 'placeholder.svg?height=160&width=160'
-                                    }
-                                    alt=${helpers.escapeHTML(item.name)}
+                                    src=${image}
+                                    alt=${helpers.escapeHTML(title)}
                                 />
                                 <button class="hit-play-btn">
                                     <i class="fas fa-play"></i>
@@ -27,12 +34,10 @@ export class BiggestHitsComponent {
                             </div>
                             <div class="hit-card-info">
                                 <h3 class="hit-card-title">${helpers.escapeHTML(
-                                    item.name
+                                    title
                                 )}</h3>
                                 <p class="hit-card-artist">${helpers.escapeHTML(
-                                    (item.user_display_name ||
-                                        item.user_username) ??
-                                        'Unknown'
+                                    name
                                 )}</p>
                             </div>
                         </div>

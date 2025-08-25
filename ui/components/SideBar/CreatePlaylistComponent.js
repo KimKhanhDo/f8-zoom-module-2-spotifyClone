@@ -1,4 +1,3 @@
-// ui/components/SideBar/CreatePlaylistComponent.js
 import { httpRequest } from '../../../utils/index.js';
 import { helpers } from '../../../utils/index.js';
 
@@ -130,7 +129,7 @@ export class CreatePlaylistComponent {
 
             this.playlistHeading.textContent = playlist.name;
             this.playlistUsername.textContent =
-                (user.display_name || user.userName) ?? 'Me';
+                (user.display_name || user.username) ?? 'Me';
 
             // Sau khi TẠO playlist thành công:
             this._notifyPlaylistChange('created');

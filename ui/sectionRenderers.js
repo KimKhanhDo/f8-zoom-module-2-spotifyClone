@@ -1,4 +1,4 @@
-import { artistsData, playerData, playlistsData } from '../data/index.js';
+import { artistsData, playerData, tracksData } from '../data/index.js';
 import { httpRequest, helpers } from '../utils/index.js';
 import { handleTrackSelect } from '../main.js';
 
@@ -139,19 +139,51 @@ export function toggleDetailPanel(forceShow = false) {
     }
 }
 
-function updateFollowBtnState({ cardInfo, type }) {
+function resolveFollowTarget(cardInfo, type) {
+    switch (type) {
+        case 'artist':
+            return {
+                type: 'artist',
+                id: cardInfo.id,
+                isFollowing: cardInfo.is_following,
+            };
+
+        case 'playlist':
+            return {
+                type: 'playlist',
+                id: cardInfo.id,
+                isFollowing: cardInfo.is_following,
+            };
+
+        case 'track':
+            // follow ARTIST của track
+            return {
+                type: 'artist',
+                id: cardInfo.artist_id,
+            };
+
+        default:
+            return null;
+    }
+}
+
+async function updateFollowBtnState({ cardInfo, type }) {
     const followBtn = document.querySelector('#follow-btn');
-    let isFollowing = cardInfo.is_following;
+    const target = resolveFollowTarget(cardInfo, type);
+    // Set lại label và sự kiện mỗi lần render artist/playlist detail
+    let isFollowing = target.isFollowing;
+
+    if (typeof isFollowing !== 'boolean' && target.type === 'artist') {
+        const artistDetail = await artistsData.getArtistById(target.id);
+        isFollowing = artistDetail.is_following;
+    }
+
+    followBtn.textContent = isFollowing ? 'Unfollow' : 'Follow';
     let path = '';
 
-    // Set lại label và sự kiện mỗi lần render artist/playlist detail
-    isFollowing
-        ? (followBtn.textContent = 'Unfollow')
-        : (followBtn.textContent = 'Follow');
-
-    type === 'artist'
-        ? (path = `artists/${cardInfo.id}/follow`)
-        : (path = `playlists/${cardInfo.id}/follow`);
+    target.type === 'artist'
+        ? (path = `artists/${target.id}/follow`)
+        : (path = `playlists/${target.id}/follow`);
 
     followBtn.onclick = async () => {
         followBtn.disabled = true;
@@ -196,52 +228,71 @@ function updateFollowBtnState({ cardInfo, type }) {
     };
 }
 
-function getScrollbarWidth() {
-    // Tạo 1 div ẩn ra ngoài màn hình để đo scrollbar thật
-    const div = document.createElement('div');
-    div.style.visibility = 'hidden';
-    div.style.overflow = 'scroll';
-    div.style.position = 'absolute';
-    div.style.top = '-9999px';
+// ========== BIGGEST HITS ACTION - use for playlist ==========
+// callback truyền vào BiggestHitsComponent
+// async function handleHitCardClick(playlistId) {
+//     if (!playlistId || playlistId === 'undefined') return;
 
-    document.body.appendChild(div);
-    // Hiệu giữa offsetWidth và clientWidth chính là chiều rộng scrollbar
-    const scrollbarWidth = div.offsetWidth - div.clientWidth;
+//     let playlistInfo = {};
+//     let tracks = [];
 
-    document.body.removeChild(div);
-    return scrollbarWidth;
-}
+//     try {
+//         playlistInfo = await playlistsData.getPlaylistById(playlistId);
+//         tracks = await playlistsData.getPlaylistTracks(playlistId);
+
+//         console.log('Playlist Info:', playlistInfo);
+//         // console.log('Playlist Tracks:', tracks);
+//     } catch (error) {
+//         console.error('Error in handleHitCardClick:', error);
+//     } finally {
+//         toggleDetailPanel(true);
+//         updateUIWithInfoAndTracks(playlistInfo, tracks, 'playlist');
+//     }
+// }
+
+// export async function renderBiggestHitsSection() {
+//     const { playlists } = await playlistsData.getAllPlaylists();
+
+//     const hitsContainer = document.querySelector('.hits-grid');
+
+//     const biggestHitsComponent = new BiggestHitsComponent({
+//         container: hitsContainer,
+//         biggestHits: playlists,
+//         onTrackClick: handleHitCardClick,
+//     });
+
+//     biggestHitsComponent.render();
+// }
 
 // ========== BIGGEST HITS ACTION ==========
 // callback truyền vào BiggestHitsComponent
-async function handleHitCardClick(playlistId) {
-    if (!playlistId || playlistId === 'undefined') return;
+async function handleHitCardClick(trackId) {
+    if (!trackId || trackId === 'undefined') return;
 
-    let playlistInfo = {};
+    let trackInfo = {};
     let tracks = [];
 
     try {
-        playlistInfo = await playlistsData.getPlaylistById(playlistId);
-        tracks = await playlistsData.getPlaylistTracks(playlistId);
+        trackInfo = await tracksData.getTrackById(trackId);
+        console.log(trackInfo);
 
-        console.log('Playlist Info:', playlistInfo);
-        // console.log('Playlist Tracks:', tracks);
+        tracks.push(trackInfo);
     } catch (error) {
         console.error('Error in handleHitCardClick:', error);
     } finally {
         toggleDetailPanel(true);
-        updateUIWithInfoAndTracks(playlistInfo, tracks, 'playlist');
+        updateUIWithInfoAndTracks(trackInfo, tracks, 'track');
     }
 }
 
 export async function renderBiggestHitsSection() {
-    const { playlists } = await playlistsData.getAllPlaylists();
+    const { tracks } = await tracksData.getAllTrendingTracks();
 
     const hitsContainer = document.querySelector('.hits-grid');
 
     const biggestHitsComponent = new BiggestHitsComponent({
         container: hitsContainer,
-        biggestHits: playlists,
+        biggestHits: tracks,
         onTrackClick: handleHitCardClick,
     });
 
@@ -274,8 +325,6 @@ async function handleArtistCardClick(playlistId) {
         artistInfo = await artistsData.getArtistById(playlistId);
         const res = await artistsData.getArtistTracks(playlistId); // res là OBJECT
         tracks = Array.isArray(res?.tracks) ? res.tracks : []; // ép về mảng
-
-        // console.log('Artist Info: ', artistInfo);
     } catch (error) {
         console.error('Error in handleHitCardClick:', error);
     } finally {

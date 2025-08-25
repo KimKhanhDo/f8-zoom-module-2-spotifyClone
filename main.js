@@ -64,13 +64,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Close modal when clicking close button
     modalClose.addEventListener('click', closeModal);
 
-    // Close modal when clicking overlay (outside modal container)
-    // authModal.addEventListener('click', function (e) {
-    //     if (e.target === authModal) {
-    //         closeModal();
-    //     }
-    // });
-
     // Close modal with Escape key
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && authModal.classList.contains('show')) {
@@ -236,12 +229,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const logo = document.querySelector('.logo');
 
     // Render sidebar và các section phụ
-    // renderSidebarLeftSection();
     renderBiggestHitsSection();
     renderPopularArtistsSection();
 
     // Assign event cho icon Home & Spotify
-    // setupTooltip();
+    setupTooltip();
     homeBtn.onclick = () => toggleDetailPanel(false);
     logo.onclick = () => {
         toggleDetailPanel(false);
@@ -263,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Chỉ gọi khi có token!
     if (accessToken) {
         try {
-            // Nếu đã đăng nhập (có token hợp lệ trong localStorage) ⇒ Hiển thị avatar và menu người dùng
+            // Nếu đã đăng nhập (có token hợp lệ trong localStorage) -> Hiển thị avatar và menu người dùng
             const { user } = await httpRequest.get('users/me');
             userInfo.classList.add('show');
             setUserAvatarInitial(user);
@@ -321,28 +313,7 @@ export function onPlayerTrackChange() {
     renderPopularTracksSection(playerData.getAllTracks(), handleTrackSelect);
 }
 
-function setupAutoCloseContextMenu(
-    menuSelector,
-    triggerSelector,
-    showClass = 'show'
-) {
-    document.addEventListener('click', function (e) {
-        const menu = document.querySelector(menuSelector);
-        const triggerBtn = document.querySelector(triggerSelector);
-
-        // Nếu menu đang mở và click không phải vào sort-btn hoặc bên trong menu thì ẩn menu
-        if (
-            menu &&
-            menu.classList.contains(showClass) &&
-            !menu.contains(e.target) &&
-            !triggerBtn.contains(e.target)
-        ) {
-            menu.classList.remove(showClass);
-        }
-    });
-}
-
-// Hàm để hiển thị thông tin user
+// Hiển thị thông tin user
 function setUserAvatarInitial(user) {
     const userName = document.querySelector('#user-name');
     const userAvatar = document.querySelector('#userAvatar');

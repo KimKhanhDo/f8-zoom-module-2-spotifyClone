@@ -33,7 +33,30 @@
             href="css/responsive.css"
         />
 
-        <style></style>
+        <style>
+            .tooltip {
+                position: fixed;
+                z-index: 9999;
+                padding: 8px 10px;
+                border-radius: 8px;
+                background: #272626;
+                color: #fff;
+                font-size: 13px;
+                line-height: 1.2;
+                pointer-events: none;
+                opacity: 0;
+                transform: translateY(-4px) scale(0.98);
+                transition: opacity 0.12s ease, transform 0.12s ease;
+            }
+            .tooltip[style*='opacity: 1'] {
+                transform: translateY(0) scale(1);
+            }
+
+            .control-btn:disabled {
+                cursor: not-allowed;
+                opacity: 0.3;
+            }
+        </style>
     </head>
 
     <body>
@@ -815,8 +838,14 @@
                 </div>
 
                 <div class="player-right">
-                    <button class="control-btn">
-                        <i class="fas fa-microphone"></i>
+                    <button
+                        class="control-btn"
+                        disabled
+                    >
+                        <i
+                            class="fas fa-microphone"
+                            aria-hidden="true"
+                        ></i>
                     </button>
                     <div class="volume-container">
                         <button

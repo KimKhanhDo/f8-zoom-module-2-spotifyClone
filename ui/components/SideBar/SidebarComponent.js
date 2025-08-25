@@ -2,10 +2,12 @@ import { playlistsData, artistsData } from '../../../data/index.js';
 import { SearchLibraryComponent } from './SearchLibraryComponent.js';
 import { helpers, httpRequest } from '../../../utils/index.js';
 
+/* ============== TABS OPTIONS ============== */
 const TAB_ALL = 'all';
 const TAB_PLAYLISTS = 'playlists';
 const TAB_ARTISTS = 'artists';
 
+/* ============== SORT OPTIONS ============== */
 const SORT_RECENT = 'recent';
 const SORT_RECENTLY_ADDED = 'recently-added';
 const SORT_ALPHABETICAL = 'alphabetical';
@@ -24,7 +26,7 @@ const VIEW_DEFAULT_LIST = 'default-list';
 const VIEW_COMPACT_GRID = 'compact-grid';
 const VIEW_DEFAULT_GRID = 'default-grid';
 
-/* Icon nhỏ trên nút view (trên cùng, cạnh sort-text) */
+/* Icon nhỏ trên cùng, cạnh sort-text */
 const VIEW_ICON = {
     [VIEW_COMPACT_LIST]: 'fa-bars',
     [VIEW_DEFAULT_LIST]: 'fa-list',
@@ -39,11 +41,11 @@ export class SidebarComponent {
 
         // Sort & View
         this.sortMode = SORT_RECENT;
-        this.viewMode = VIEW_DEFAULT_LIST; // yêu cầu: mặc định luôn default-list
+        this.viewMode = VIEW_DEFAULT_LIST;
 
         this.onOpenPlaylistEditor = onOpenPlaylistEditor; // ← callback mở modal edit
 
-        // Khởi tạo state: danh sách kết quả hiện tại (mặc định là toàn bộ)
+        // Khởi tạo state
         this.playlistResults = [];
         this.artistResults = [];
         this.searchQuery = '';
@@ -52,7 +54,7 @@ export class SidebarComponent {
         this._initSortDom();
         this._bindSortEvents();
 
-        // cache các DOM liên quan context menu
+        // Cache các DOM liên quan context menu & gắn event
         this._initContextMenuDom();
         this._bindContextMenuEvents();
 
@@ -63,9 +65,7 @@ export class SidebarComponent {
         );
 
         // Đồng bộ UI lần đầu (icon view + active + container class + nhãn sort)
-        this._syncViewUiState();
-        if (this.sortText) this.sortText.textContent = SORT_TEXT[this.sortMode];
-
+        this._syncUiState();
         this.reloadLibrary();
 
         // lắng sự kiện đồng bộ lại library khi playlist đổi
@@ -85,8 +85,10 @@ export class SidebarComponent {
     renderSidebar() {
         let contentHtml = '';
 
-        // Xác định dữ liệu thực tế sẽ render ra UI (có thể là tất cả hoặc đã được lọc)
-        // Clone mảng gốc để sort/filter mà không ảnh hưởng tới state gốc
+        /**
+            Xác định dữ liệu thực tế sẽ render ra UI (có thể là tất cả hoặc đã được lọc)
+            Clone mảng gốc để sort/filter mà không ảnh hưởng tới state gốc
+         */
         const displayedPlaylists = this.playlistResults.slice();
         const displayedArtists = this.artistResults.slice();
         const isSearching = !!this.searchQuery;
@@ -94,19 +96,23 @@ export class SidebarComponent {
         // Áp sort dựa trên mode hiện tại
         this._applySort(displayedPlaylists, displayedArtists, this.sortMode);
 
-        // ===== CSS theo view mode =====
-        // - Gắn data-view để CSS trong index.html áp layout tương ứng
-        // - Toggle class 'grid' cho 2 mode grid
-        if (this.libraryContentEl) {
-            this.libraryContentEl.dataset.view = this.viewMode;
-            const isGrid =
-                this.viewMode === VIEW_COMPACT_GRID ||
-                this.viewMode === VIEW_DEFAULT_GRID;
-            this.libraryContentEl.classList.toggle('grid', isGrid);
-        }
+        /**
+         * CSS theo view mode:
+            - Gắn data-view để CSS trong index.html áp layout tương ứng
+            - Toggle class 'grid' cho 2 mode grid
+        */
+        this.libraryContentEl.dataset.view = this.viewMode;
 
-        // Kiểm tra: nếu đang search mà không tìm thấy kết quả nào
-        // User đã nhập search & ko tìm được playlist hoặc artist nào
+        const isGrid =
+            this.viewMode === VIEW_COMPACT_GRID ||
+            this.viewMode === VIEW_DEFAULT_GRID;
+
+        this.libraryContentEl.classList.toggle('grid', isGrid);
+
+        /**
+            - Kiểm tra: nếu đang search mà không tìm thấy kết quả nào
+            - User đã nhập search & ko tìm được playlist hoặc artist nào
+         */
         const nothingFound =
             this.searchQuery &&
             displayedPlaylists.length === 0 &&
@@ -151,137 +157,103 @@ export class SidebarComponent {
         `;
     }
 
-    // Render list theo tab đang chọn
-    _renderLibraryItems(displayedPlaylists, displayedArtists) {
-        let items = '';
-
-        // Nếu tab hiện tại là ALL hoặc PLAYLISTS thì render danh sách playlist
-        if (this.currentTab === TAB_ALL || this.currentTab === TAB_PLAYLISTS) {
-            items += displayedPlaylists
-                .map((item) => this._renderPlaylistItem(item))
-                .join('');
-        }
-
-        // Nếu tab hiện tại là ALL hoặc ARTISTS thì render danh sách artist
-        if (this.currentTab === TAB_ALL || this.currentTab === TAB_ARTISTS) {
-            items += displayedArtists
-                .map((item) => this._renderArtistItem(item))
-                .join('');
-        }
-
-        return items;
-    }
-
-    // Render từng playlist item (render theo view mode đã chọn)
-    _renderPlaylistItem(item) {
-        const name = helpers.escapeHTML(item.name || 'My Playlist');
-        const owner = helpers.escapeHTML(
-            item.user_display_name || item.user_username || 'Me'
+    _renderItem(item, type) {
+        const name = helpers.escapeHTML(
+            item.name || (type === 'artist' ? 'Unknown Artist' : 'My Playlist')
         );
         const image = helpers.escapeHTML(item.image_url || 'placeholder.svg');
         const id = helpers.escapeHTML(item.id);
 
+        // Owner chỉ áp dụng cho playlist
+        const owner =
+            type === 'artist'
+                ? ''
+                : helpers.escapeHTML(
+                      item.user_display_name || item.user_username || 'Me'
+                  );
+
         switch (this.viewMode) {
-            // ===== Compact list =====
-            case VIEW_COMPACT_LIST:
+            // ----- Compact list -----
+            case VIEW_COMPACT_LIST: {
                 return `
-                <div class="library-item compact-item" data-type="playlist" data-id="${id}">
-                    <p class="item-title compact-title">${name}</p>
-                    <span class="item-subtitle compact-subtitle">Playlist • ${owner}</span>
-                </div>
-                `;
-
-            // ===== Default list =====
-            case VIEW_DEFAULT_LIST:
-                return `
-        <div class="library-item" data-type="playlist" data-id=${id}>
-            <img src="${image}" alt="${name}" class="item-image"/>
-            <div class="item-info">
-                <div class="item-title">${name}</div>
-                <div class="item-subtitle">
-                 <i class="fas fa-thumbtack"></i>
-               ${` Playlist • ${owner}`}
-                </div>
-            </div>
+        <div class="library-item compact-item" data-type="${type}" data-id="${id}">
+          <p class="item-title compact-title">${name}</p>
+          <span class="item-subtitle compact-subtitle">${
+              type === 'artist' ? 'Artist' : `Playlist • ${owner}`
+          }</span>
         </div>
-        `;
+      `;
+            }
 
-            // ===== Compact grid =====
-            case VIEW_COMPACT_GRID:
+            // ----- Default list -----
+            case VIEW_DEFAULT_LIST: {
                 return `
-                <div class="library-item compact-grid" data-type="playlist" data-id="${id}">
-                    <img src="${image}" alt="${name}" class="compact-img"/>
-                </div>
-                `;
+        <div class="library-item" data-type="${type}" data-id=${id}>
+          <img src="${image}" alt="${name}" class="item-image"/>
+          <div class="item-info">
+            <div class="item-title">${name}</div>
+            <div class="item-subtitle">
+              ${type === 'artist' ? '' : '<i class="fas fa-thumbtack"></i>'}
+              ${type === 'artist' ? 'Artist' : `Playlist • ${owner}`}
+            </div>
+          </div>
+        </div>
+      `;
+            }
 
-            // ===== Default grid ===== (GIỮ grid-play-btn như bạn yêu cầu)
-            case VIEW_DEFAULT_GRID:
+            // ----- Compact grid -----
+            case VIEW_COMPACT_GRID: {
                 return `
-                <div class="library-item default-grid" data-type="playlist" data-id="${id}">
-                    <div class="thumb thumb--rounded">
-                        <img src="${image}" alt="${name}" class="thumb-img"/>
-                        <button class="grid-play-btn"><i class="fa-solid fa-play"></i></button>
-                    </div>
-                    <div class="meta">
-                        <div class="item-title grid-title">${name}</div>
-                        <div class="item-subtitle grid-subtitle">Playlist • ${owner}</div>
-                    </div>
-                </div>
-                `;
+        <div class="library-item compact-grid" data-type="${type}" data-id="${id}">
+          <img src="${image}" alt="${name}" class="compact-img"/>
+        </div>
+      `;
+            }
+
+            // ----- Default grid -----
+            case VIEW_DEFAULT_GRID: {
+                const thumbMod =
+                    type === 'artist' ? 'thumb--circle' : 'thumb--rounded';
+                return `
+        <div class="library-item default-grid" data-type="${type}" data-id="${id}">
+          <div class="thumb ${thumbMod}">
+            <img src="${image}" alt="${name}" class="thumb-img"/>
+            <button class="grid-play-btn"><i class="fa-solid fa-play"></i></button>
+          </div>
+          <div class="meta">
+            <div class="item-title grid-title">${name}</div>
+            <div class="item-subtitle grid-subtitle"> ${
+                type === 'artist' ? 'Artist' : `Playlist • ${owner}`
+            }</div>
+          </div>
+        </div>
+      `;
+            }
+
+            default:
+                return '';
         }
     }
 
-    // Render từng artist item (render theo view mode đã chọn)
-    _renderArtistItem(item) {
-        const name = helpers.escapeHTML(item.name || 'Unknown Artist');
-        const image = helpers.escapeHTML(item.image_url || 'placeholder.svg');
-        const id = helpers.escapeHTML(item.id);
+    // Render list theo tab đang chọn
+    _renderLibraryItems(displayedPlaylists, displayedArtists) {
+        let items = '';
 
-        switch (this.viewMode) {
-            // ===== Compact list =====
-            case VIEW_COMPACT_LIST:
-                return `
-                <div class="library-item compact-item" data-type="artist" data-id="${id}">
-                    <p class="item-title compact-title">${name}</p>
-                    <span class="item-subtitle compact-subtitle">Artist</span>
-                </div>
-                `;
-
-            // ===== Default list =====
-            case VIEW_DEFAULT_LIST:
-                return `
-    <div class="library-item" data-type="artist" data-id=${id}>
-        <img src="${image}" alt="${name}" class="item-image"/>
-        <div class="item-info">
-            <div class="item-title">${name}</div>
-            <div class="item-subtitle">Artist</div>
-        </div>
-    </div>
-    `;
-
-            // ===== Compact grid =====
-            case VIEW_COMPACT_GRID:
-                return `
-                <div class="library-item compact-grid" data-type="artist" data-id="${id}">
-                    <img src="${image}" alt="${name}" class="compact-img" style="border-radius:50%"/>
-                </div>
-                `;
-
-            // ===== Default grid ===== (GIỮ grid-play-btn)
-            case VIEW_DEFAULT_GRID:
-                return `
-                <div class="library-item default-grid" data-type="artist" data-id="${id}">
-                    <div class="thumb thumb--circle">
-                        <img src="${image}" alt="${name}" class="thumb-img"/>
-                        <button class="grid-play-btn"><i class="fa-solid fa-play"></i></button>
-                    </div>
-                    <div class="meta">
-                        <div class="item-title grid-title">${name}</div>
-                        <div class="item-subtitle grid-subtitle">Artist</div>
-                    </div>
-                </div>
-                `;
+        // Nếu tab hiện tại là ALL hoặc PLAYLISTS -> render danh sách playlist
+        if (this.currentTab === TAB_ALL || this.currentTab === TAB_PLAYLISTS) {
+            items += displayedPlaylists
+                .map((playlist) => this._renderItem(playlist, 'playlist'))
+                .join('');
         }
+
+        // Nếu tab hiện tại là ALL hoặc ARTISTS -> render danh sách artist
+        if (this.currentTab === TAB_ALL || this.currentTab === TAB_ARTISTS) {
+            items += displayedArtists
+                .map((artist) => this._renderItem(artist, 'artist'))
+                .join('');
+        }
+
+        return items;
     }
 
     _renderTabs(currentTab, displayedPlaylists, displayedArtists, isSearching) {
@@ -357,7 +329,6 @@ export class SidebarComponent {
             };
         });
 
-        // check null cho closeFilterBtn ở trạng thái TAB_ALL
         if (closeFilterBtn) {
             closeFilterBtn.onclick = () => {
                 this.currentTab = TAB_ALL;
@@ -428,10 +399,10 @@ export class SidebarComponent {
             const currentMenu =
                 type === 'artist' ? this.artistMenu : this.playlistMenu;
 
-            // gắn id vào menu để click handler dùng
+            // set id vào currentMenu
             currentMenu.dataset.id = id;
-
             currentMenu.classList.add('show');
+
             this.sidebar.classList.add('locked');
             this._positionMenu(currentMenu, e);
         });
@@ -448,6 +419,7 @@ export class SidebarComponent {
             try {
                 if (deleteOpt) {
                     await playlistsData.deleteUserPlaylistById(playlistId);
+
                     document.dispatchEvent(
                         new CustomEvent('playlist:changed', {
                             detail: { action: 'deleted', playlistId },
@@ -460,11 +432,13 @@ export class SidebarComponent {
                     await httpRequest.put(`playlists/${playlistId}`, {
                         is_public: false,
                     });
+
                     document.dispatchEvent(
                         new CustomEvent('playlist:changed', {
                             detail: { action: 'unpublished', playlistId },
                         })
                     );
+
                     return;
                 }
 
@@ -479,6 +453,7 @@ export class SidebarComponent {
                     ) {
                         this.onOpenPlaylistEditor(playlist);
                     }
+
                     return;
                 }
             } catch (err) {
@@ -546,6 +521,7 @@ export class SidebarComponent {
         const padding = 8;
         const minLeft = scroller.scrollLeft + padding;
         const minTop = scroller.scrollTop + padding;
+
         const maxLeft =
             scroller.scrollLeft + scroller.clientWidth - menuW - padding;
         const maxTop =
@@ -564,23 +540,22 @@ export class SidebarComponent {
         this.sortBtn = this.container.querySelector('.sort-btn');
         this.sortMenu = this.container.querySelector('.recent-context-menu');
         this.sortText = this.container.querySelector('.sort-text');
-        this.sortIcon = this.container.querySelector('.sort-icon'); // icon trên nút
-        this.viewBtns = this.sortMenu.querySelectorAll('.recent-view-btn'); // 4 nút view
+        this.sortIcon = this.container.querySelector('.sort-icon');
+        this.viewBtns = this.sortMenu.querySelectorAll('.recent-view-btn');
         this.libraryContentEl =
             this.container.querySelector('.library-content');
         this.sidebarScroller = this.container; // để set overflowY
     }
 
     _bindSortEvents() {
-        // Nút mở/đóng menu
+        // Mở/đóng menu
         this.sortBtn.onclick = (e) => {
             e.stopPropagation();
             this.sortMenu.classList.toggle('show');
-            if (this.sortMenu.classList.contains('show')) {
-                this.sidebarScroller.style.overflowY = 'hidden';
-            } else {
-                this.sidebarScroller.style.overflowY = '';
-            }
+
+            this.sortMenu.classList.contains('show')
+                ? (this.sidebarScroller.style.overflowY = 'hidden')
+                : (this.sidebarScroller.style.overflowY = '');
         };
 
         // Chọn option (Sort + View)
@@ -589,9 +564,9 @@ export class SidebarComponent {
             const item = e.target.closest('.recent-menu-item');
             if (item) {
                 this.sortMode = item.dataset.sort;
-                if (this.sortText)
-                    this.sortText.textContent = SORT_TEXT[this.sortMode];
+                this.sortText.textContent = SORT_TEXT[this.sortMode];
 
+                // Xoá active các option trước khi set lại
                 this._removeActiveSortOptions();
                 item.classList.add('active');
 
@@ -604,19 +579,14 @@ export class SidebarComponent {
             const viewBtn = e.target.closest('.recent-view-btn');
             if (viewBtn) {
                 this.viewMode = viewBtn.dataset.view;
+                this.sortIcon.className = `sort-icon fas ${
+                    VIEW_ICON[this.viewMode]
+                }`;
 
-                // Xoá active các nút view trước khi set lại (yêu cầu)
+                // Xoá active các nút view trước khi set lại
                 this._removeActiveViewBtns();
                 viewBtn.classList.add('active');
 
-                // Đổi icon trên nút góc trên
-                if (this.sortIcon) {
-                    this.sortIcon.className = `sort-icon fas ${
-                        VIEW_ICON[this.viewMode]
-                    }`;
-                }
-
-                // Render theo view mới + áp CSS
                 this.renderSidebar();
                 this._hideSortMenu();
                 return;
@@ -692,14 +662,13 @@ export class SidebarComponent {
         }
     }
 
-    /* Xoá active tất cả option sort trong menu trước khi set option mới */
     _removeActiveSortOptions() {
         const allOptionsMenu =
             this.sortMenu.querySelectorAll('.recent-menu-item');
+
         allOptionsMenu.forEach((option) => option.classList.remove('active'));
     }
 
-    /* Xoá active tất cả nút view trước khi set nút mới (yêu cầu) */
     _removeActiveViewBtns() {
         this.viewBtns.forEach((btn) => btn.classList.remove('active'));
     }
@@ -709,27 +678,23 @@ export class SidebarComponent {
         this.sidebarScroller.style.overflowY = '';
     }
 
-    /* Đồng bộ UI view lần đầu: icon + active + layout container */
-    _syncViewUiState() {
-        if (this.sortIcon) {
-            this.sortIcon.className = `sort-icon fas ${
-                VIEW_ICON[this.viewMode]
-            }`;
-        }
-        // set active cho nút view đúng với default
+    // Đồng bộ UI view lần đầu: icon + active + layout container
+    _syncUiState() {
+        this.sortText.textContent = SORT_TEXT[this.sortMode];
+        this.sortIcon.className = `sort-icon fas ${VIEW_ICON[this.viewMode]}`;
         this._removeActiveViewBtns();
+
+        // set active cho nút view đúng với default
         const btn = this.sortMenu.querySelector(
             `.recent-view-btn[data-view="${this.viewMode}"]`
         );
         if (btn) btn.classList.add('active');
 
         // container layout
-        if (this.libraryContentEl) {
-            this.libraryContentEl.dataset.view = this.viewMode;
-            const isGrid =
-                this.viewMode === VIEW_COMPACT_GRID ||
-                this.viewMode === VIEW_DEFAULT_GRID;
-            this.libraryContentEl.classList.toggle('grid', isGrid);
-        }
+        this.libraryContentEl.dataset.view = this.viewMode;
+        const isGrid =
+            this.viewMode === VIEW_COMPACT_GRID ||
+            this.viewMode === VIEW_DEFAULT_GRID;
+        this.libraryContentEl.classList.toggle('grid', isGrid);
     }
 }
